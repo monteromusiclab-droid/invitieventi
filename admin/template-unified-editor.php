@@ -1,0 +1,2027 @@
+<?php
+/**
+ * Editor Template Unificato
+ * Pannello unico per modificare tutti gli aspetti del template
+ */
+
+if (!defined('ABSPATH')) exit;
+
+if (!current_user_can('manage_options')) {
+    wp_die(__('Non hai i permessi per accedere a questa pagina.'));
+}
+
+// Assicurati che la funzione wi_sanitize_hex_color sia disponibile
+if (!function_exists('wi_sanitize_hex_color')) {
+    function wi_sanitize_hex_color($color) {
+        if (empty($color)) return 'transparent';
+        $color = trim($color);
+        if (preg_match('/^rgba?\([\d\s,\.]+\)$/i', $color)) return $color;
+        if (preg_match('/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/', $color)) return $color;
+        $valid_keywords = array('transparent', 'inherit', 'currentColor', 'white', 'black');
+        if (in_array(strtolower($color), $valid_keywords)) return strtolower($color);
+        $sanitized = sanitize_hex_color($color);
+        return $sanitized ? $sanitized : '#000000';
+    }
+}
+
+global $wpdb;
+$templates_table = $wpdb->prefix . 'wi_templates';
+
+// Gestione salvataggio
+$message = '';
+$message_type = '';
+
+// DEBUG: Vedere cosa arriva PRIMA della condizione
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    error_log("=== WI EDITOR DEBUG START ===");
+    error_log("POST Request ricevuta");
+    error_log("save_template presente: " . (isset($_POST['save_template']) ? 'SI' : 'NO'));
+    if (isset($_POST['save_template'])) {
+        error_log("save_template valore: " . var_export($_POST['save_template'], true));
+    }
+    error_log("_wpnonce presente: " . (isset($_POST['_wpnonce']) ? 'SI' : 'NO'));
+    error_log("Totale POST params: " . count($_POST));
+    error_log("=== WI EDITOR DEBUG END ===");
+}
+
+if (isset($_POST['save_template']) && check_admin_referer('wi_save_template')) {
+    $template_id = intval($_POST['template_id'] ?? 0);
+
+    // Log POST data per debug
+    error_log("WI Editor - POST data ricevuta: " . print_r(array_keys($_POST), true));
+    error_log("WI Editor - Template ID: $template_id");
+
+    // Verifica esistenza colonne necessarie
+    $existing_columns = $wpdb->get_col("DESCRIBE {$templates_table}", 0);
+    $required_columns = array('title_weight', 'button_font', 'countdown_label_font');
+    $missing_columns = array_diff($required_columns, $existing_columns);
+
+    if (!empty($missing_columns)) {
+        $message = 'ERRORE: Il database del template non è aggiornato. Mancano ' . count($missing_columns) . ' colonne. ';
+        $message .= '<a href="' . admin_url('admin.php?page=wedding-invites-templates') . '">Clicca qui per eseguire la migrazione</a>';
+        $message_type = 'error';
+        error_log("WI Editor - Colonne mancanti: " . implode(', ', $missing_columns));
+    } else {
+
+    // Ottieni HTML e CSS (usa template standard se vuoti)
+    $html_structure = isset($_POST['template_html']) ? wp_kses_post(wp_unslash($_POST['template_html'])) : '';
+    $css_styles = isset($_POST['template_css']) ? wp_strip_all_tags(wp_unslash($_POST['template_css'])) : '';
+
+    // Se HTML/CSS sono vuoti (nuovo template), usa il template standard
+    if (empty($html_structure) && $template_id == 0) {
+        require_once WI_PLUGIN_DIR . 'includes/default-templates-content.php';
+        $html_structure = get_standard_template_html();
+        error_log("WI Editor - HTML vuoto, utilizzato template standard");
+    }
+
+    if (empty($css_styles) && $template_id == 0) {
+        require_once WI_PLUGIN_DIR . 'includes/default-templates-content.php';
+        $css_styles = get_elegant_template_css();
+        error_log("WI Editor - CSS vuoto, utilizzato CSS standard");
+    }
+
+    $template_data = array(
+        // Info Base
+        'name' => sanitize_text_field($_POST['template_name'] ?? ''),
+        'description' => sanitize_textarea_field($_POST['template_description'] ?? ''),
+        'is_active' => isset($_POST['template_active']) ? 1 : 0,
+        'sort_order' => intval($_POST['template_order'] ?? 0),
+
+        // HTML/CSS - SICURO
+        'html_structure' => $html_structure,
+        'css_styles' => $css_styles,
+        'custom_css' => isset($_POST['custom_css']) ? wp_strip_all_tags(wp_unslash($_POST['custom_css'])) : '',
+
+        // Font Titolo
+        'title_font' => sanitize_text_field($_POST['title_font'] ?? 'Playfair Display'),
+        'title_size' => min(200, max(10, intval($_POST['title_size'] ?? 48))),
+        'title_color' => wi_sanitize_hex_color($_POST['title_color'] ?? '#d4af37'),
+        'title_weight' => sanitize_text_field($_POST['title_weight'] ?? '600'),
+        'divider_color' => wi_sanitize_hex_color($_POST['divider_color'] ?? '#d4af37'),
+
+        // Font Messaggio
+        'message_font' => sanitize_text_field($_POST['message_font'] ?? 'Lora'),
+        'message_size' => min(100, max(10, intval($_POST['message_size'] ?? 18))),
+        'message_color' => wi_sanitize_hex_color($_POST['message_color'] ?? '#555555'),
+        'message_bg_color' => wi_sanitize_hex_color($_POST['message_bg_color'] ?? 'transparent'),
+
+        // Messaggio Finale
+        'final_message_btn_bg_color' => wi_sanitize_hex_color($_POST['final_message_btn_bg_color'] ?? '#d4af37'),
+        'final_message_btn_text_color' => wi_sanitize_hex_color($_POST['final_message_btn_text_color'] ?? '#ffffff'),
+        'final_message_text_color' => wi_sanitize_hex_color($_POST['final_message_text_color'] ?? '#333333'),
+
+        // Font Dettagli Evento
+        'details_font' => sanitize_text_field($_POST['details_font'] ?? 'inherit'),
+        'details_size' => min(100, max(10, intval($_POST['details_size'] ?? 16))),
+        'details_label_color' => wi_sanitize_hex_color($_POST['details_label_color'] ?? '#333333'),
+        'details_value_color' => wi_sanitize_hex_color($_POST['details_value_color'] ?? '#666666'),
+        'details_bg_color' => wi_sanitize_hex_color($_POST['details_bg_color'] ?? 'transparent'),
+        'details_border_color' => wi_sanitize_hex_color($_POST['details_border_color'] ?? '#d4af37'),
+        'details_align' => in_array($_POST['details_align'] ?? '', ['left', 'center', 'right']) ? $_POST['details_align'] : 'left',
+        'hide_event_icons' => isset($_POST['hide_event_icons']) ? 1 : 0,
+
+        // Font Pulsanti
+        'button_font' => sanitize_text_field($_POST['button_font'] ?? 'inherit'),
+        'button_size' => min(100, max(10, intval($_POST['button_size'] ?? 16))),
+        'button_color' => wi_sanitize_hex_color($_POST['button_color'] ?? '#ffffff'),
+        'button_bg_color' => wi_sanitize_hex_color($_POST['button_bg_color'] ?? '#d4af37'),
+        'button_hover_color' => wi_sanitize_hex_color($_POST['button_hover_color'] ?? '#ffffff'),
+        'button_hover_bg_color' => wi_sanitize_hex_color($_POST['button_hover_bg_color'] ?? '#b8941f'),
+        'button_radius' => min(50, max(0, intval($_POST['button_radius'] ?? 25))),
+        'button_padding' => min(50, max(0, intval($_POST['button_padding'] ?? 15))),
+
+        // Countdown
+        'countdown_style' => sanitize_text_field($_POST['countdown_style'] ?? 'style1'),
+        'countdown_font' => sanitize_text_field($_POST['countdown_font'] ?? 'Lora'),
+        'countdown_size' => min(200, max(10, intval($_POST['countdown_size'] ?? 48))),
+        'countdown_color' => wi_sanitize_hex_color($_POST['countdown_color'] ?? '#2c3e50'),
+        'countdown_bg_color' => wi_sanitize_hex_color($_POST['countdown_bg_color'] ?? '#f8f9fa'),
+        'countdown_border_color' => wi_sanitize_hex_color($_POST['countdown_border_color'] ?? '#e2e8f0'),
+        'countdown_label_font' => sanitize_text_field($_POST['countdown_label_font'] ?? 'Montserrat'),
+        'countdown_label_size' => min(100, max(10, intval($_POST['countdown_label_size'] ?? 14))),
+        'countdown_label_color' => wi_sanitize_hex_color($_POST['countdown_label_color'] ?? '#64748b'),
+        'countdown_animated' => isset($_POST['countdown_animated']) ? 1 : 0,
+
+        // Section Title (wi-section-title)
+        'section_title_font' => sanitize_text_field($_POST['section_title_font'] ?? 'inherit'),
+        'section_title_size' => min(200, max(10, intval($_POST['section_title_size'] ?? 28))),
+        'section_title_color' => wi_sanitize_hex_color($_POST['section_title_color'] ?? '#2c3e50'),
+        'section_title_weight' => sanitize_text_field($_POST['section_title_weight'] ?? '600'),
+
+        // Immagini
+        'header_image' => isset($_POST['header_image']) ? esc_url($_POST['header_image']) : '',
+        'decoration_top' => isset($_POST['decoration_top']) ? esc_url($_POST['decoration_top']) : '',
+        'decoration_bottom' => isset($_POST['decoration_bottom']) ? esc_url($_POST['decoration_bottom']) : '',
+        'background_image' => isset($_POST['background_image']) ? esc_url($_POST['background_image']) : '',
+        'footer_logo' => isset($_POST['footer_logo']) ? esc_url($_POST['footer_logo']) : '',
+
+        // Dimensioni e opacità immagini - VALIDATI
+        'header_size' => min(200, max(10, intval($_POST['header_size'] ?? 100))),
+        'header_opacity' => min(1.0, max(0, floatval($_POST['header_opacity'] ?? 1))),
+        'decoration_top_size' => min(200, max(10, intval($_POST['decoration_top_size'] ?? 100))),
+        'decoration_top_opacity' => min(1.0, max(0, floatval($_POST['decoration_top_opacity'] ?? 1))),
+        'decoration_bottom_size' => min(200, max(10, intval($_POST['decoration_bottom_size'] ?? 100))),
+        'decoration_bottom_opacity' => min(1.0, max(0, floatval($_POST['decoration_bottom_opacity'] ?? 1))),
+        'background_opacity' => min(1.0, max(0, floatval($_POST['background_opacity'] ?? 0.1))),
+        'footer_logo_size' => min(200, max(10, intval($_POST['footer_logo_size'] ?? 100))),
+        'footer_logo_opacity' => min(1.0, max(0, floatval($_POST['footer_logo_opacity'] ?? 1))),
+
+        // Sfondo
+        'background_color' => wi_sanitize_hex_color($_POST['background_color'] ?? '#ffffff'),
+        'background_main_opacity' => min(1.0, max(0, floatval($_POST['background_main_opacity'] ?? 1))),
+        'overlay_color' => wi_sanitize_hex_color($_POST['overlay_color'] ?? '#000000'),
+        'overlay_opacity' => min(1.0, max(0, floatval($_POST['overlay_opacity'] ?? 0.3))),
+    );
+
+    // Log dati che verranno salvati
+    error_log("WI Editor - Dati da salvare: " . count($template_data) . " campi");
+    error_log("WI Editor - Nome template: " . $template_data['name']);
+
+    if ($template_id > 0) {
+        // Update esistente
+        $result = $wpdb->update($templates_table, $template_data, array('id' => $template_id));
+
+        // Log per debug
+        error_log("WI Editor - UPDATE tentato per template ID: $template_id");
+        error_log("WI Editor - UPDATE result: " . ($result !== false ? 'SUCCESS' : 'FAILED'));
+        error_log("WI Editor - Last error: " . $wpdb->last_error);
+        error_log("WI Editor - Last query: " . $wpdb->last_query);
+
+        if ($result === false) {
+            $message = 'ERRORE: Impossibile aggiornare il template. ' . $wpdb->last_error;
+            $message_type = 'error';
+        } else {
+            $message = 'Template aggiornato con successo!';
+            $message_type = 'success';
+        }
+    } else {
+        // Nuovo template
+        $result = $wpdb->insert($templates_table, $template_data);
+
+        error_log("WI Editor - INSERT tentato");
+        error_log("WI Editor - INSERT result: " . ($result !== false ? 'SUCCESS' : 'FAILED'));
+        error_log("WI Editor - Last error: " . $wpdb->last_error);
+
+        if ($result === false) {
+            $message = 'ERRORE: Impossibile creare il template. ' . $wpdb->last_error;
+            $message_type = 'error';
+        } else {
+            $template_id = $wpdb->insert_id;
+            $message = 'Template creato con successo!';
+            $message_type = 'success';
+        }
+    }
+
+    // Salva relazioni categorie solo se il salvataggio principale ha avuto successo
+    if ($message_type === 'success' && $template_id > 0) {
+        $relations_table = $wpdb->prefix . 'wi_template_categories';
+        $wpdb->delete($relations_table, array('template_id' => $template_id));
+
+        if (!empty($_POST['template_categories'])) {
+            foreach ($_POST['template_categories'] as $category_id) {
+                $wpdb->insert($relations_table, array(
+                    'template_id' => $template_id,
+                    'category_id' => intval($category_id)
+                ));
+            }
+        }
+    }
+
+    // Redirect per evitare doppio submit SOLO se successo
+    if ($message_type === 'success') {
+        wp_redirect(admin_url('admin.php?page=wedding-invites-template-edit&id=' . $template_id . '&updated=1'));
+        exit;
+    }
+    } // Fine verifica colonne
+}
+
+// Carica template per modifica
+$edit_template = null;
+$template_id = 0;
+
+if (isset($_GET['id'])) {
+    $template_id = intval($_GET['id']);
+    $edit_template = $wpdb->get_row($wpdb->prepare("SELECT * FROM $templates_table WHERE id = %d", $template_id));
+
+    if (!$edit_template) {
+        wp_die('Template non trovato.');
+    }
+} else {
+    // Nuovo template: crea oggetto con valori di default
+    require_once WI_PLUGIN_DIR . 'includes/default-templates-content.php';
+
+    $edit_template = (object) array(
+        'id' => 0,
+        'name' => '',
+        'description' => '',
+        'html_structure' => get_standard_template_html(),
+        'css_styles' => get_elegant_template_css(),
+        'custom_css' => '',
+        'is_active' => 1,
+        'sort_order' => 0
+    );
+}
+
+// Mostra messaggio se redirect da salvataggio
+if (isset($_GET['updated'])) {
+    $message = 'Template aggiornato con successo!';
+    $message_type = 'success';
+}
+?>
+
+<div class="wrap wi-unified-editor">
+    <h1 class="wp-heading-inline">
+        <?php echo $edit_template ? '✏️ Modifica Template: ' . esc_html($edit_template->name) : '➕ Nuovo Template'; ?>
+    </h1>
+
+    <a href="<?php echo admin_url('admin.php?page=wedding-invites-templates'); ?>" class="page-title-action">← Torna alla Lista</a>
+
+    <hr class="wp-heading-inline" style="margin: 20px 0;">
+
+    <?php if ($message) : ?>
+    <div class="notice notice-<?php echo esc_attr($message_type); ?> is-dismissible">
+        <p><?php echo wp_kses_post($message); ?></p>
+    </div>
+    <?php endif; ?>
+
+    <form method="post" action="" id="wi-template-form" class="wi-form-unified">
+        <?php wp_nonce_field('wi_save_template'); ?>
+        <input type="hidden" name="template_id" value="<?php echo $template_id; ?>">
+        <input type="hidden" name="save_template" value="1">
+
+        <!-- Navigation Tabs -->
+        <div class="wi-tabs-navigation">
+            <button type="button" class="wi-tab-btn active" data-tab="info-base">
+                📝 Info Base
+            </button>
+            <button type="button" class="wi-tab-btn" data-tab="stili-testo">
+                ✍️ Stili Testo
+            </button>
+            <button type="button" class="wi-tab-btn" data-tab="countdown">
+                ⏰ Countdown
+            </button>
+            <button type="button" class="wi-tab-btn" data-tab="pulsanti">
+                🔘 Pulsanti
+            </button>
+            <button type="button" class="wi-tab-btn" data-tab="immagini">
+                🖼️ Immagini
+            </button>
+            <button type="button" class="wi-tab-btn" data-tab="sfondo">
+                🎨 Sfondo
+            </button>
+            <button type="button" class="wi-tab-btn" data-tab="html-css">
+                💻 HTML/CSS
+            </button>
+            <button type="button" class="wi-tab-btn" data-tab="css-custom">
+                ⚙️ CSS Custom
+            </button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="wi-tabs-content">
+
+            <!-- TAB 1: INFO BASE -->
+            <div class="wi-tab-panel active" id="tab-info-base">
+                <h2>📝 Informazioni Base Template</h2>
+
+                <div class="wi-form-row">
+                    <div class="wi-form-group">
+                        <label for="template_name">Nome Template *</label>
+                        <input type="text" id="template_name" name="template_name" class="widefat"
+                               value="<?php echo $edit_template ? esc_attr($edit_template->name) : ''; ?>" required>
+                        <p class="description">Es: Elegante Oro, Moderno Minimalista, etc.</p>
+                    </div>
+                </div>
+
+                <div class="wi-form-row">
+                    <div class="wi-form-group">
+                        <label for="template_description">Descrizione</label>
+                        <textarea id="template_description" name="template_description" class="widefat" rows="3"><?php echo $edit_template ? esc_textarea($edit_template->description) : ''; ?></textarea>
+                        <p class="description">Breve descrizione dello stile del template</p>
+                    </div>
+                </div>
+
+                <div class="wi-form-row wi-cols-2">
+                    <div class="wi-form-group">
+                        <label for="template_order">Ordine di visualizzazione</label>
+                        <input type="number" id="template_order" name="template_order" class="small-text"
+                               value="<?php echo $edit_template ? $edit_template->sort_order : 0; ?>" min="0">
+                        <p class="description">Numero più basso = appare prima</p>
+                    </div>
+
+                    <div class="wi-form-group">
+                        <label>
+                            <input type="checkbox" name="template_active" value="1"
+                                   <?php checked($edit_template ? $edit_template->is_active : 1, 1); ?>>
+                            Template attivo (visibile agli utenti)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="wi-form-row">
+                    <div class="wi-form-group">
+                        <label>Categorie Template</label>
+                        <div class="wi-categories-grid">
+                            <?php
+                            global $wpdb;
+                            $categories_table = $wpdb->prefix . 'wi_event_categories';
+                            $table_exists = ($wpdb->get_var("SHOW TABLES LIKE '$categories_table'") !== null);
+
+                            if (!$table_exists) {
+                                echo '<div class="notice notice-warning inline"><p>Sistema categorie non attivato. <a href="' . admin_url('admin.php?page=wedding-invites-categories') . '">Vai alla pagina Categorie</a></p></div>';
+                            } else {
+                                $categories = $wpdb->get_results("SELECT * FROM $categories_table WHERE is_active = 1 ORDER BY sort_order");
+                                $assigned_categories = array();
+
+                                if ($edit_template) {
+                                    $relations_table = $wpdb->prefix . 'wi_template_categories';
+                                    $assigned = $wpdb->get_results($wpdb->prepare(
+                                        "SELECT category_id FROM $relations_table WHERE template_id = %d",
+                                        $template_id
+                                    ));
+                                    foreach ($assigned as $rel) {
+                                        $assigned_categories[] = $rel->category_id;
+                                    }
+                                }
+
+                                foreach ($categories as $cat) {
+                                    $checked = in_array($cat->id, $assigned_categories) ? 'checked' : '';
+                                    echo '<label class="wi-checkbox-card">';
+                                    echo '<input type="checkbox" name="template_categories[]" value="' . $cat->id . '" ' . $checked . '>';
+                                    echo '<span class="icon">' . esc_html($cat->icon) . '</span>';
+                                    echo '<span class="name">' . esc_html($cat->name) . '</span>';
+                                    echo '</label>';
+                                }
+                            }
+                            ?>
+                        </div>
+                        <p class="description">Seleziona i tipi di evento per cui questo template è adatto</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: STILI TESTO -->
+            <div class="wi-tab-panel" id="tab-stili-testo">
+                <h2>✍️ Stili Testo</h2>
+                <p class="description" style="margin-bottom: 30px;">Personalizza font, dimensioni e colori per tutti gli elementi testuali del template</p>
+
+                <!-- Titolo Principale -->
+                <div class="wi-section-box">
+                    <h3>📝 Titolo Principale</h3>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="title_font">Font Titolo</label>
+                            <select id="title_font" name="title_font" class="widefat">
+                                <option value="Playfair Display" <?php selected($edit_template->title_font ?? '', 'Playfair Display'); ?>>Playfair Display (Elegante)</option>
+                                <option value="Lora" <?php selected($edit_template->title_font ?? '', 'Lora'); ?>>Lora (Serif Moderno)</option>
+                                <option value="Montserrat" <?php selected($edit_template->title_font ?? '', 'Montserrat'); ?>>Montserrat (Sans-serif)</option>
+                                <option value="Dancing Script" <?php selected($edit_template->title_font ?? '', 'Dancing Script'); ?>>Dancing Script (Calligrafico)</option>
+                                <option value="Roboto" <?php selected($edit_template->title_font ?? '', 'Roboto'); ?>>Roboto (Moderno)</option>
+                                <option value="Open Sans" <?php selected($edit_template->title_font ?? '', 'Open Sans'); ?>>Open Sans (Pulito)</option>
+                                <option value="Poppins" <?php selected($edit_template->title_font ?? '', 'Poppins'); ?>>Poppins (Geometrico)</option>
+                                <option value="Raleway" <?php selected($edit_template->title_font ?? '', 'Raleway'); ?>>Raleway (Elegante Sans)</option>
+                                <option value="Merriweather" <?php selected($edit_template->title_font ?? '', 'Merriweather'); ?>>Merriweather (Serif Classico)</option>
+                                <option value="Crimson Text" <?php selected($edit_template->title_font ?? '', 'Crimson Text'); ?>>Crimson Text (Editoriale)</option>
+                                <option value="Bebas Neue" <?php selected($edit_template->title_font ?? '', 'Bebas Neue'); ?>>Bebas Neue (Bold Display)</option>
+                            </select>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="title_size">Dimensione Font (px)</label>
+                            <input type="range" id="title_size" name="title_size" min="24" max="72" value="<?php echo $edit_template->title_size ?? 48; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->title_size ?? 48; ?>px</span>
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="title_color">Colore Titolo</label>
+                            <input type="text" id="title_color" name="title_color" class="wi-color-picker" value="<?php echo $edit_template->title_color ?? '#d4af37'; ?>">
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="divider_color">Colore Divider (linea sotto titolo)</label>
+                            <input type="text" id="divider_color" name="divider_color" class="wi-color-picker" value="<?php echo $edit_template->divider_color ?? '#d4af37'; ?>">
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row">
+                        <div class="wi-form-group">
+                            <label for="title_weight">Peso Font (font-weight)</label>
+                            <select id="title_weight" name="title_weight">
+                                <option value="400" <?php selected($edit_template->title_weight ?? '', '400'); ?>>Normale (400)</option>
+                                <option value="500" <?php selected($edit_template->title_weight ?? '', '500'); ?>>Medio (500)</option>
+                                <option value="600" <?php selected($edit_template->title_weight ?? '600', '600'); ?>>Semi-Bold (600)</option>
+                                <option value="700" <?php selected($edit_template->title_weight ?? '', '700'); ?>>Bold (700)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messaggio -->
+                <div class="wi-section-box">
+                    <h3>💬 Messaggio</h3>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="message_font">Font Messaggio</label>
+                            <select id="message_font" name="message_font" class="widefat">
+                                <option value="Lora" <?php selected($edit_template->message_font ?? '', 'Lora'); ?>>Lora (Serif Moderno)</option>
+                                <option value="Open Sans" <?php selected($edit_template->message_font ?? '', 'Open Sans'); ?>>Open Sans (Leggibile)</option>
+                                <option value="Roboto" <?php selected($edit_template->message_font ?? '', 'Roboto'); ?>>Roboto (Neutro)</option>
+                                <option value="Montserrat" <?php selected($edit_template->message_font ?? '', 'Montserrat'); ?>>Montserrat (Geometrico)</option>
+                                <option value="Poppins" <?php selected($edit_template->message_font ?? '', 'Poppins'); ?>>Poppins (Friendly)</option>
+                                <option value="Raleway" <?php selected($edit_template->message_font ?? '', 'Raleway'); ?>>Raleway (Leggero)</option>
+                                <option value="Merriweather" <?php selected($edit_template->message_font ?? '', 'Merriweather'); ?>>Merriweather (Lettura)</option>
+                            </select>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="message_size">Dimensione Font (px)</label>
+                            <input type="range" id="message_size" name="message_size" min="14" max="32" value="<?php echo $edit_template->message_size ?? 18; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->message_size ?? 18; ?>px</span>
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="message_color">Colore Testo</label>
+                            <input type="text" id="message_color" name="message_color" class="wi-color-picker" value="<?php echo $edit_template->message_color ?? '#555555'; ?>">
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="message_bg_color">Colore Sfondo (opzionale)</label>
+                            <input type="text" id="message_bg_color" name="message_bg_color" class="wi-color-picker" value="<?php echo $edit_template->message_bg_color ?? 'transparent'; ?>">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messaggio Finale (pulsante e contenuto nascosto) -->
+                <div class="wi-section-box">
+                    <h3>✉️ Messaggio Finale (pulsante + contenuto nascosto)</h3>
+                    <p class="description">Il pulsante che gli utenti cliccano per rivelare il messaggio finale</p>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="final_message_btn_bg_color">Colore Sfondo Pulsante</label>
+                            <input type="text" id="final_message_btn_bg_color" name="final_message_btn_bg_color" class="wi-color-picker" value="<?php echo $edit_template->final_message_btn_bg_color ?? '#d4af37'; ?>">
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="final_message_btn_text_color">Colore Testo Pulsante</label>
+                            <input type="text" id="final_message_btn_text_color" name="final_message_btn_text_color" class="wi-color-picker" value="<?php echo $edit_template->final_message_btn_text_color ?? '#ffffff'; ?>">
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row">
+                        <div class="wi-form-group">
+                            <label for="final_message_text_color">Colore Testo Messaggio (dopo click)</label>
+                            <input type="text" id="final_message_text_color" name="final_message_text_color" class="wi-color-picker" value="<?php echo $edit_template->final_message_text_color ?? '#333333'; ?>">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dettagli Evento -->
+                <div class="wi-section-box">
+                    <h3>📍 Dettagli Evento</h3>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="details_font">Font Dettagli</label>
+                            <select id="details_font" name="details_font" class="widefat">
+                                <option value="inherit" <?php selected($edit_template->details_font ?? 'inherit', 'inherit'); ?>>Eredita da Messaggio</option>
+                                <option value="Lora" <?php selected($edit_template->details_font ?? '', 'Lora'); ?>>Lora</option>
+                                <option value="Open Sans" <?php selected($edit_template->details_font ?? '', 'Open Sans'); ?>>Open Sans</option>
+                                <option value="Roboto" <?php selected($edit_template->details_font ?? '', 'Roboto'); ?>>Roboto</option>
+                                <option value="Montserrat" <?php selected($edit_template->details_font ?? '', 'Montserrat'); ?>>Montserrat</option>
+                            </select>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="details_size">Dimensione Font (px)</label>
+                            <input type="range" id="details_size" name="details_size" min="14" max="24" value="<?php echo $edit_template->details_size ?? 16; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->details_size ?? 16; ?>px</span>
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="details_label_color">Colore Label (Data, Orario, Luogo)</label>
+                            <input type="text" id="details_label_color" name="details_label_color" class="wi-color-picker" value="<?php echo $edit_template->details_label_color ?? '#333333'; ?>">
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="details_value_color">Colore Valore (10 Gennaio, 18:30...)</label>
+                            <input type="text" id="details_value_color" name="details_value_color" class="wi-color-picker" value="<?php echo $edit_template->details_value_color ?? '#666666'; ?>">
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="details_bg_color">Colore Sfondo (opzionale)</label>
+                            <input type="text" id="details_bg_color" name="details_bg_color" class="wi-color-picker" value="<?php echo $edit_template->details_bg_color ?? 'transparent'; ?>">
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="details_border_color">Colore Bordo Sinistro</label>
+                            <input type="text" id="details_border_color" name="details_border_color" class="wi-color-picker" value="<?php echo $edit_template->details_border_color ?? '#d4af37'; ?>">
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="details_align">Allineamento Testo</label>
+                            <select id="details_align" name="details_align" class="widefat">
+                                <option value="left" <?php selected($edit_template->details_align ?? 'left', 'left'); ?>>⬅️ Sinistra</option>
+                                <option value="center" <?php selected($edit_template->details_align ?? '', 'center'); ?>>↔️ Centro</option>
+                                <option value="right" <?php selected($edit_template->details_align ?? '', 'right'); ?>>➡️ Destra</option>
+                            </select>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label>
+                                <input type="checkbox" name="hide_event_icons" value="1" <?php checked($edit_template->hide_event_icons ?? 0, 1); ?>>
+                                Nascondi icone evento (📅 🕐 📍)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Titoli Sezioni -->
+                <div class="wi-section-box">
+                    <h3>🏷️ Titoli Sezioni (.wi-section-title)</h3>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="section_title_font">Font Titoli Sezioni</label>
+                            <select id="section_title_font" name="section_title_font" class="widefat">
+                                <option value="inherit" <?php selected($edit_template->section_title_font ?? 'inherit', 'inherit'); ?>>Eredita da Titolo</option>
+                                <option value="Playfair Display" <?php selected($edit_template->section_title_font ?? '', 'Playfair Display'); ?>>Playfair Display</option>
+                                <option value="Montserrat" <?php selected($edit_template->section_title_font ?? '', 'Montserrat'); ?>>Montserrat</option>
+                                <option value="Roboto" <?php selected($edit_template->section_title_font ?? '', 'Roboto'); ?>>Roboto</option>
+                                <option value="Poppins" <?php selected($edit_template->section_title_font ?? '', 'Poppins'); ?>>Poppins</option>
+                            </select>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="section_title_size">Dimensione Font (px)</label>
+                            <input type="range" id="section_title_size" name="section_title_size" min="16" max="48" value="<?php echo $edit_template->section_title_size ?? 28; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->section_title_size ?? 28; ?>px</span>
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="section_title_color">Colore</label>
+                            <input type="text" id="section_title_color" name="section_title_color" class="wi-color-picker" value="<?php echo $edit_template->section_title_color ?? '#2c3e50'; ?>">
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="section_title_weight">Peso Font</label>
+                            <select id="section_title_weight" name="section_title_weight">
+                                <option value="400" <?php selected($edit_template->section_title_weight ?? '', '400'); ?>>Normale (400)</option>
+                                <option value="500" <?php selected($edit_template->section_title_weight ?? '', '500'); ?>>Medio (500)</option>
+                                <option value="600" <?php selected($edit_template->section_title_weight ?? '600', '600'); ?>>Semi-Bold (600)</option>
+                                <option value="700" <?php selected($edit_template->section_title_weight ?? '', '700'); ?>>Bold (700)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: COUNTDOWN -->
+            <div class="wi-tab-panel" id="tab-countdown">
+                <h2>⏰ Countdown</h2>
+                <p class="description" style="margin-bottom: 30px;">Personalizza l'aspetto del countdown nel template</p>
+
+                <div class="wi-section-box">
+                    <h3>🎨 Stile Countdown</h3>
+                    <p class="description">Gli stili del countdown vengono controllati tramite Font, Dimensioni e Colori qui sotto. Per personalizzazioni avanzate usa il CSS Custom.</p>
+
+                    <!-- Campo nascosto per mantenere compatibilità database -->
+                    <input type="hidden" name="countdown_style" value="<?php echo $edit_template->countdown_style ?? 'style1'; ?>">
+                </div>
+
+                <div class="wi-section-box">
+                    <h3>🔢 Numeri Countdown</h3>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="countdown_font">Font Numeri</label>
+                            <select id="countdown_font" name="countdown_font" class="widefat">
+                                <option value="Lora" <?php selected($edit_template->countdown_font ?? 'Lora', 'Lora'); ?>>Lora</option>
+                                <option value="Roboto" <?php selected($edit_template->countdown_font ?? '', 'Roboto'); ?>>Roboto</option>
+                                <option value="Montserrat" <?php selected($edit_template->countdown_font ?? '', 'Montserrat'); ?>>Montserrat</option>
+                                <option value="Poppins" <?php selected($edit_template->countdown_font ?? '', 'Poppins'); ?>>Poppins</option>
+                                <option value="Bebas Neue" <?php selected($edit_template->countdown_font ?? '', 'Bebas Neue'); ?>>Bebas Neue</option>
+                            </select>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="countdown_size">Dimensione Numeri (px)</label>
+                            <input type="range" id="countdown_size" name="countdown_size" min="24" max="72" value="<?php echo $edit_template->countdown_size ?? 48; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->countdown_size ?? 48; ?>px</span>
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="countdown_color">Colore Numeri</label>
+                            <input type="text" id="countdown_color" name="countdown_color" class="wi-color-picker" value="<?php echo $edit_template->countdown_color ?? '#2c3e50'; ?>">
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="countdown_bg_color">Colore Sfondo</label>
+                            <input type="text" id="countdown_bg_color" name="countdown_bg_color" class="wi-color-picker" value="<?php echo $edit_template->countdown_bg_color ?? '#f8f9fa'; ?>">
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="countdown_border_color">Colore Bordo</label>
+                            <input type="text" id="countdown_border_color" name="countdown_border_color" class="wi-color-picker" value="<?php echo $edit_template->countdown_border_color ?? '#e2e8f0'; ?>">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wi-section-box">
+                    <h3>🏷️ Etichette (Giorni, Ore, Minuti, Secondi)</h3>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="countdown_label_font">Font Etichette</label>
+                            <select id="countdown_label_font" name="countdown_label_font" class="widefat">
+                                <option value="Montserrat" <?php selected($edit_template->countdown_label_font ?? 'Montserrat', 'Montserrat'); ?>>Montserrat</option>
+                                <option value="Roboto" <?php selected($edit_template->countdown_label_font ?? '', 'Roboto'); ?>>Roboto</option>
+                                <option value="Open Sans" <?php selected($edit_template->countdown_label_font ?? '', 'Open Sans'); ?>>Open Sans</option>
+                                <option value="Poppins" <?php selected($edit_template->countdown_label_font ?? '', 'Poppins'); ?>>Poppins</option>
+                            </select>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="countdown_label_size">Dimensione Etichette (px)</label>
+                            <input type="range" id="countdown_label_size" name="countdown_label_size" min="10" max="20" value="<?php echo $edit_template->countdown_label_size ?? 14; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->countdown_label_size ?? 14; ?>px</span>
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="countdown_label_color">Colore Etichette</label>
+                            <input type="text" id="countdown_label_color" name="countdown_label_color" class="wi-color-picker" value="<?php echo $edit_template->countdown_label_color ?? '#64748b'; ?>">
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row">
+                        <div class="wi-form-group">
+                            <label>
+                                <input type="checkbox" name="countdown_animated" value="1" <?php checked($edit_template->countdown_animated ?? 0, 1); ?>>
+                                Anima countdown (transizioni fluide sui cambi di numero)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: PULSANTI -->
+            <div class="wi-tab-panel" id="tab-pulsanti">
+                <h2>🔘 Pulsanti</h2>
+                <p class="description" style="margin-bottom: 30px;">Personalizza l'aspetto dei pulsanti call-to-action</p>
+
+                <div class="wi-section-box">
+                    <h3>✍️ Testo Pulsanti</h3>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="button_font">Font Pulsanti</label>
+                            <select id="button_font" name="button_font" class="widefat">
+                                <option value="inherit" <?php selected($edit_template->button_font ?? 'inherit', 'inherit'); ?>>Eredita da Titolo</option>
+                                <option value="Montserrat" <?php selected($edit_template->button_font ?? '', 'Montserrat'); ?>>Montserrat</option>
+                                <option value="Roboto" <?php selected($edit_template->button_font ?? '', 'Roboto'); ?>>Roboto</option>
+                                <option value="Poppins" <?php selected($edit_template->button_font ?? '', 'Poppins'); ?>>Poppins</option>
+                                <option value="Open Sans" <?php selected($edit_template->button_font ?? '', 'Open Sans'); ?>>Open Sans</option>
+                            </select>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="button_size">Dimensione Font (px)</label>
+                            <input type="range" id="button_size" name="button_size" min="12" max="24" value="<?php echo $edit_template->button_size ?? 16; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->button_size ?? 16; ?>px</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wi-section-box">
+                    <h3>🎨 Colori Pulsanti</h3>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="button_color">Colore Testo</label>
+                            <input type="text" id="button_color" name="button_color" class="wi-color-picker" value="<?php echo $edit_template->button_color ?? '#ffffff'; ?>">
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="button_bg_color">Colore Sfondo</label>
+                            <input type="text" id="button_bg_color" name="button_bg_color" class="wi-color-picker" value="<?php echo $edit_template->button_bg_color ?? '#d4af37'; ?>">
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="button_hover_color">Colore Testo (Hover)</label>
+                            <input type="text" id="button_hover_color" name="button_hover_color" class="wi-color-picker" value="<?php echo $edit_template->button_hover_color ?? '#ffffff'; ?>">
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="button_hover_bg_color">Colore Sfondo (Hover)</label>
+                            <input type="text" id="button_hover_bg_color" name="button_hover_bg_color" class="wi-color-picker" value="<?php echo $edit_template->button_hover_bg_color ?? '#b8941f'; ?>">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wi-section-box">
+                    <h3>📐 Forma Pulsanti</h3>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="button_radius">Arrotondamento Angoli (px)</label>
+                            <input type="range" id="button_radius" name="button_radius" min="0" max="50" value="<?php echo $edit_template->button_radius ?? 25; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->button_radius ?? 25; ?>px</span>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="button_padding">Padding Interno (px)</label>
+                            <input type="range" id="button_padding" name="button_padding" min="8" max="30" value="<?php echo $edit_template->button_padding ?? 15; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->button_padding ?? 15; ?>px</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: IMMAGINI -->
+            <div class="wi-tab-panel" id="tab-immagini">
+                <h2>🖼️ Immagini</h2>
+                <p class="description" style="margin-bottom: 30px;">Gestisci tutte le immagini del template con controllo di dimensioni e opacità</p>
+
+                <!-- Header Image -->
+                <div class="wi-section-box">
+                    <h3>🎨 Immagine Intestazione (Header)</h3>
+
+                    <div class="wi-form-row">
+                        <div class="wi-form-group">
+                            <label for="header_image">URL Immagine</label>
+                            <div class="wi-image-upload-wrapper">
+                                <input type="text" id="header_image" name="header_image" class="widefat wi-image-url" value="<?php echo $edit_template->header_image ?? ''; ?>" placeholder="https://...">
+                                <button type="button" class="button wi-upload-image-btn" data-target="header_image">Carica Immagine</button>
+                            </div>
+                            <div id="header_image_preview" class="wi-image-preview">
+                                <?php if ($edit_template && !empty($edit_template->header_image)): ?>
+                                    <img src="<?php echo esc_url($edit_template->header_image); ?>" style="max-width: 200px;">
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="header_size">Dimensione (%)</label>
+                            <input type="range" id="header_size" name="header_size" min="50" max="200" value="<?php echo $edit_template->header_size ?? 100; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->header_size ?? 100; ?>%</span>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="header_opacity">Opacità</label>
+                            <input type="range" id="header_opacity" name="header_opacity" min="0" max="1" step="0.1" value="<?php echo $edit_template->header_opacity ?? 1; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->header_opacity ?? 1; ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Decorazione Sopra Countdown -->
+                <div class="wi-section-box">
+                    <h3>⬆️ Decorazione Sopra Countdown</h3>
+
+                    <div class="wi-form-row">
+                        <div class="wi-form-group">
+                            <label for="decoration_top">URL Immagine</label>
+                            <div class="wi-image-upload-wrapper">
+                                <input type="text" id="decoration_top" name="decoration_top" class="widefat wi-image-url" value="<?php echo $edit_template->decoration_top ?? ''; ?>" placeholder="https://...">
+                                <button type="button" class="button wi-upload-image-btn" data-target="decoration_top">Carica Immagine</button>
+                            </div>
+                            <div id="decoration_top_preview" class="wi-image-preview">
+                                <?php if ($edit_template && !empty($edit_template->decoration_top)): ?>
+                                    <img src="<?php echo esc_url($edit_template->decoration_top); ?>" style="max-width: 200px;">
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="decoration_top_size">Dimensione (%)</label>
+                            <input type="range" id="decoration_top_size" name="decoration_top_size" min="50" max="200" value="<?php echo $edit_template->decoration_top_size ?? 100; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->decoration_top_size ?? 100; ?>%</span>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="decoration_top_opacity">Opacità</label>
+                            <input type="range" id="decoration_top_opacity" name="decoration_top_opacity" min="0" max="1" step="0.1" value="<?php echo $edit_template->decoration_top_opacity ?? 1; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->decoration_top_opacity ?? 1; ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Decorazione Sotto Countdown -->
+                <div class="wi-section-box">
+                    <h3>⬇️ Decorazione Sotto Countdown</h3>
+
+                    <div class="wi-form-row">
+                        <div class="wi-form-group">
+                            <label for="decoration_bottom">URL Immagine</label>
+                            <div class="wi-image-upload-wrapper">
+                                <input type="text" id="decoration_bottom" name="decoration_bottom" class="widefat wi-image-url" value="<?php echo $edit_template->decoration_bottom ?? ''; ?>" placeholder="https://...">
+                                <button type="button" class="button wi-upload-image-btn" data-target="decoration_bottom">Carica Immagine</button>
+                            </div>
+                            <div id="decoration_bottom_preview" class="wi-image-preview">
+                                <?php if ($edit_template && !empty($edit_template->decoration_bottom)): ?>
+                                    <img src="<?php echo esc_url($edit_template->decoration_bottom); ?>" style="max-width: 200px;">
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="decoration_bottom_size">Dimensione (%)</label>
+                            <input type="range" id="decoration_bottom_size" name="decoration_bottom_size" min="50" max="200" value="<?php echo $edit_template->decoration_bottom_size ?? 100; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->decoration_bottom_size ?? 100; ?>%</span>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="decoration_bottom_opacity">Opacità</label>
+                            <input type="range" id="decoration_bottom_opacity" name="decoration_bottom_opacity" min="0" max="1" step="0.1" value="<?php echo $edit_template->decoration_bottom_opacity ?? 1; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->decoration_bottom_opacity ?? 1; ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Immagine Sfondo -->
+                <div class="wi-section-box">
+                    <h3>🌅 Immagine Sfondo</h3>
+
+                    <div class="wi-form-row">
+                        <div class="wi-form-group">
+                            <label for="background_image">URL Immagine</label>
+                            <div class="wi-image-upload-wrapper">
+                                <input type="text" id="background_image" name="background_image" class="widefat wi-image-url" value="<?php echo $edit_template->background_image ?? ''; ?>" placeholder="https://...">
+                                <button type="button" class="button wi-upload-image-btn" data-target="background_image">Carica Immagine</button>
+                            </div>
+                            <div id="background_image_preview" class="wi-image-preview">
+                                <?php if ($edit_template && !empty($edit_template->background_image)): ?>
+                                    <img src="<?php echo esc_url($edit_template->background_image); ?>" style="max-width: 200px;">
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row">
+                        <div class="wi-form-group">
+                            <label for="background_opacity">Opacità Sfondo</label>
+                            <input type="range" id="background_opacity" name="background_opacity" min="0" max="1" step="0.1" value="<?php echo $edit_template->background_opacity ?? 0.1; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->background_opacity ?? 0.1; ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logo Finale -->
+                <div class="wi-section-box">
+                    <h3>🏷️ Logo Finale (Footer)</h3>
+
+                    <div class="wi-form-row">
+                        <div class="wi-form-group">
+                            <label for="footer_logo">URL Immagine</label>
+                            <div class="wi-image-upload-wrapper">
+                                <input type="text" id="footer_logo" name="footer_logo" class="widefat wi-image-url" value="<?php echo $edit_template->footer_logo ?? ''; ?>" placeholder="https://...">
+                                <button type="button" class="button wi-upload-image-btn" data-target="footer_logo">Carica Immagine</button>
+                            </div>
+                            <div id="footer_logo_preview" class="wi-image-preview">
+                                <?php if ($edit_template && !empty($edit_template->footer_logo)): ?>
+                                    <img src="<?php echo esc_url($edit_template->footer_logo); ?>" style="max-width: 200px;">
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="footer_logo_size">Dimensione (%)</label>
+                            <input type="range" id="footer_logo_size" name="footer_logo_size" min="50" max="200" value="<?php echo $edit_template->footer_logo_size ?? 100; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->footer_logo_size ?? 100; ?>%</span>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="footer_logo_opacity">Opacità</label>
+                            <input type="range" id="footer_logo_opacity" name="footer_logo_opacity" min="0" max="1" step="0.1" value="<?php echo $edit_template->footer_logo_opacity ?? 1; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->footer_logo_opacity ?? 1; ?></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: SFONDO -->
+            <div class="wi-tab-panel" id="tab-sfondo">
+                <h2>🎨 Sfondo</h2>
+                <p class="description" style="margin-bottom: 30px;">Configura colori e overlay dello sfondo del template</p>
+
+                <div class="wi-section-box">
+                    <h3>🎨 Colore Sfondo Principale</h3>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="background_color">Colore Sfondo</label>
+                            <input type="text" id="background_color" name="background_color" class="wi-color-picker" value="<?php echo $edit_template->background_color ?? '#ffffff'; ?>">
+                            <p class="description">Colore principale dello sfondo del template</p>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="background_main_opacity">Opacità Sfondo</label>
+                            <input type="range" id="background_main_opacity" name="background_main_opacity" min="0" max="1" step="0.1" value="<?php echo $edit_template->background_main_opacity ?? 1; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->background_main_opacity ?? 1; ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wi-section-box">
+                    <h3>🌫️ Overlay Sfondo</h3>
+                    <p class="description">Overlay colorato sopra l'immagine di sfondo (se presente)</p>
+
+                    <div class="wi-form-row wi-cols-2">
+                        <div class="wi-form-group">
+                            <label for="overlay_color">Colore Overlay</label>
+                            <input type="text" id="overlay_color" name="overlay_color" class="wi-color-picker" value="<?php echo $edit_template->overlay_color ?? '#000000'; ?>">
+                            <p class="description">Colore del filtro sopra l'immagine di sfondo</p>
+                        </div>
+
+                        <div class="wi-form-group">
+                            <label for="overlay_opacity">Opacità Overlay</label>
+                            <input type="range" id="overlay_opacity" name="overlay_opacity" min="0" max="1" step="0.1" value="<?php echo $edit_template->overlay_opacity ?? 0.3; ?>" class="wi-range-slider">
+                            <span class="wi-range-value"><?php echo $edit_template->overlay_opacity ?? 0.3; ?></span>
+                            <p class="description">0 = trasparente, 1 = opaco</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wi-section-box">
+                    <h3>🖼️ Anteprima Immagine Sfondo</h3>
+                    <p class="description">L'immagine di sfondo è configurabile nella tab "Immagini"</p>
+
+                    <?php if ($edit_template && !empty($edit_template->background_image)): ?>
+                        <div class="wi-background-preview">
+                            <img src="<?php echo esc_url($edit_template->background_image); ?>" style="max-width: 400px; border: 1px solid #ddd; border-radius: 4px;">
+                            <p><a href="#" class="wi-tab-link" data-tab="immagini">Vai alla tab Immagini per modificarla →</a></p>
+                        </div>
+                    <?php else: ?>
+                        <p style="padding: 20px; background: #f0f6fc; border-left: 4px solid #2271b1; border-radius: 4px;">
+                            Nessuna immagine di sfondo impostata. <a href="#" class="wi-tab-link" data-tab="immagini">Vai alla tab Immagini per caricarne una →</a>
+                        </p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- TAB 7: HTML/CSS -->
+            <div class="wi-tab-panel" id="tab-html-css">
+                <h2>💻 HTML/CSS</h2>
+                <p class="description" style="margin-bottom: 30px;">Modifica la struttura HTML e gli stili CSS base del template</p>
+
+                <div class="wi-section-box">
+                    <h3>📄 Struttura HTML</h3>
+
+                    <div class="wi-form-row">
+                        <div class="wi-form-group">
+                            <label for="template_html">HTML Template</label>
+                            <textarea id="template_html" name="template_html" rows="15" class="widefat wi-code-editor" style="font-family: monospace; font-size: 13px;"><?php echo $edit_template ? esc_textarea($edit_template->html_structure) : ''; ?></textarea>
+                            <p class="description">Usa i placeholder: {title}, {message}, {event_date}, {event_time}, {event_location}, {countdown}, etc.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wi-section-box">
+                    <h3>🎨 Stili CSS Base</h3>
+
+                    <div class="wi-form-row">
+                        <div class="wi-form-group">
+                            <label for="template_css">CSS Template</label>
+                            <textarea id="template_css" name="template_css" rows="15" class="widefat wi-code-editor" style="font-family: monospace; font-size: 13px;"><?php echo $edit_template ? esc_textarea($edit_template->css_styles) : ''; ?></textarea>
+                            <p class="description">CSS base del template. Le personalizzazioni dei font/colori sovrascriveranno questi stili.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="notice notice-info inline">
+                    <p><strong>💡 Suggerimento:</strong> Gli stili definiti nelle altre tab (Testo, Countdown, Pulsanti, etc.) vengono generati automaticamente e sovrascrivono il CSS base.</p>
+                </div>
+            </div>
+
+            <!-- TAB 8: CSS CUSTOM -->
+            <div class="wi-tab-panel" id="tab-css-custom">
+                <h2>⚙️ CSS Personalizzato</h2>
+                <p class="description" style="margin-bottom: 30px;">Aggiungi CSS personalizzato che sovrascrive tutti gli altri stili</p>
+
+                <div class="wi-section-box">
+                    <h3>✨ CSS Custom</h3>
+
+                    <div class="wi-form-row">
+                        <div class="wi-form-group">
+                            <label for="custom_css">CSS Personalizzato</label>
+                            <textarea id="custom_css" name="custom_css" rows="20" class="widefat wi-code-editor" style="font-family: monospace; font-size: 13px;" placeholder="/* Inserisci qui il tuo CSS personalizzato */
+.wi-title {
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.wi-countdown {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}"><?php echo $edit_template ? esc_textarea($edit_template->custom_css) : ''; ?></textarea>
+                            <p class="description">Questo CSS viene applicato come ultimo stile, sovrascrivendo tutti gli altri. Usa con cautela.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wi-section-box">
+                    <h3>📚 Classi CSS Disponibili</h3>
+
+                    <div style="background: #f0f6fc; padding: 20px; border-left: 4px solid #2271b1; border-radius: 4px;">
+                        <p><strong>Classi principali del template:</strong></p>
+                        <ul style="list-style: disc; margin-left: 20px; line-height: 1.8;">
+                            <li><code>.wi-invite-container</code> - Contenitore principale</li>
+                            <li><code>.wi-title</code> - Titolo invito</li>
+                            <li><code>.wi-message</code> - Messaggio principale</li>
+                            <li><code>.wi-section-title</code> - Titoli sezioni (Dettagli, Mappa, etc.)</li>
+                            <li><code>.wi-countdown</code> - Contenitore countdown</li>
+                            <li><code>.countdown-item</code> - Singolo elemento countdown</li>
+                            <li><code>.countdown-value</code> - Numero countdown</li>
+                            <li><code>.countdown-label</code> - Etichetta countdown (Giorni, Ore, etc.)</li>
+                            <li><code>.wi-event-details</code> - Dettagli evento</li>
+                            <li><code>.wi-button</code> - Pulsanti CTA</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="notice notice-warning inline">
+                    <p><strong>⚠️ Attenzione:</strong> Il CSS personalizzato può sovrascrivere completamente l'aspetto del template. Assicurati di testare le modifiche prima di salvare.</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Submit Button (Fixed Bottom) -->
+        <div class="wi-submit-bar">
+            <input type="submit" name="save_template" value="💾 Salva Template" class="button button-primary button-large">
+            <button type="button" id="wi-toggle-preview" class="button button-large">
+                👁️ Mostra Anteprima Live
+            </button>
+            <a href="<?php echo admin_url('admin.php?page=wedding-invites-templates'); ?>" class="button button-large">
+                Annulla
+            </a>
+        </div>
+    </form>
+
+    <!-- Live Preview Panel -->
+    <div id="wi-preview-panel" class="wi-preview-panel">
+        <div class="wi-preview-header">
+            <h3>🔍 Anteprima Live Template</h3>
+            <div class="wi-preview-controls">
+                <button type="button" class="button wi-preview-device active" data-device="desktop">
+                    💻 Desktop
+                </button>
+                <button type="button" class="button wi-preview-device" data-device="tablet">
+                    📱 Tablet
+                </button>
+                <button type="button" class="button wi-preview-device" data-device="mobile">
+                    📱 Mobile
+                </button>
+                <button type="button" class="button" id="wi-refresh-preview">
+                    🔄 Aggiorna
+                </button>
+                <button type="button" class="button" id="wi-close-preview">
+                    ✖ Chiudi
+                </button>
+            </div>
+        </div>
+        <div class="wi-preview-body">
+            <iframe id="wi-preview-iframe" src="about:blank"></iframe>
+        </div>
+    </div>
+</div>
+
+<style>
+.wi-unified-editor {
+    max-width: 100%;
+}
+
+.wi-tabs-navigation {
+    display: flex;
+    gap: 5px;
+    margin: 20px 0;
+    border-bottom: 2px solid #ddd;
+    flex-wrap: wrap;
+}
+
+.wi-tab-btn {
+    background: #f0f0f1;
+    border: 1px solid #ddd;
+    border-bottom: none;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 4px 4px 0 0;
+    transition: all 0.2s;
+}
+
+.wi-tab-btn:hover {
+    background: #fff;
+}
+
+.wi-tab-btn.active {
+    background: #fff;
+    border-bottom: 2px solid #fff;
+    margin-bottom: -2px;
+    color: #2271b1;
+}
+
+.wi-tabs-content {
+    background: #fff;
+    padding: 30px;
+    border: 1px solid #ddd;
+    border-radius: 0 4px 4px 4px;
+    min-height: 400px;
+    margin-bottom: 80px;
+}
+
+.wi-tab-panel {
+    display: none;
+}
+
+.wi-tab-panel.active {
+    display: block;
+}
+
+.wi-form-row {
+    margin-bottom: 25px;
+}
+
+.wi-form-row.wi-cols-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.wi-form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.wi-form-group input[type="text"],
+.wi-form-group input[type="number"],
+.wi-form-group textarea,
+.wi-form-group select {
+    width: 100%;
+    max-width: 500px;
+}
+
+.wi-form-group .description {
+    margin-top: 5px;
+    color: #666;
+    font-size: 13px;
+}
+
+.wi-categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.wi-checkbox-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: #f8f9fa;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.wi-checkbox-card:hover {
+    background: #fff;
+    border-color: #2271b1;
+}
+
+.wi-checkbox-card input[type="checkbox"] {
+    margin: 0;
+}
+
+.wi-checkbox-card .icon {
+    font-size: 24px;
+}
+
+.wi-checkbox-card .name {
+    font-weight: 500;
+}
+
+.wi-submit-bar {
+    position: fixed;
+    bottom: 0;
+    left: 160px;
+    right: 0;
+    background: #fff;
+    border-top: 1px solid #ddd;
+    padding: 15px 30px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 100;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Section Boxes */
+.wi-section-box {
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.wi-section-box h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #2271b1;
+    font-size: 16px;
+    border-bottom: 2px solid #2271b1;
+    padding-bottom: 10px;
+}
+
+/* Range Sliders */
+.wi-range-slider {
+    width: 100% !important;
+    max-width: 400px;
+}
+
+.wi-range-value {
+    display: inline-block;
+    min-width: 60px;
+    margin-left: 10px;
+    font-weight: 600;
+    color: #2271b1;
+}
+
+/* Image Upload */
+.wi-image-upload-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.wi-image-upload-wrapper input.wi-image-url {
+    flex: 1;
+}
+
+.wi-upload-image-btn {
+    flex-shrink: 0;
+}
+
+.wi-image-preview {
+    margin-top: 15px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.wi-image-preview img {
+    display: block;
+    max-width: 200px;
+    height: auto;
+    border-radius: 4px;
+}
+
+.wi-image-preview:empty {
+    display: none;
+}
+
+/* Code Editor */
+.wi-code-editor {
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+    background: #2d2d2d !important;
+    color: #f8f8f2 !important;
+    padding: 15px !important;
+    border-radius: 4px !important;
+}
+
+/* Tab Links */
+.wi-tab-link {
+    color: #2271b1;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.wi-tab-link:hover {
+    text-decoration: underline;
+}
+
+/* Live Preview Panel */
+.wi-preview-panel {
+    position: fixed;
+    top: 32px;
+    right: -50%;
+    width: 50%;
+    height: calc(100vh - 32px);
+    background: #fff;
+    border-left: 1px solid #ddd;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    z-index: 9999;
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.wi-preview-panel.active {
+    right: 0;
+}
+
+.wi-preview-header {
+    padding: 15px 20px;
+    background: #f0f6fc;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.wi-preview-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #2271b1;
+}
+
+.wi-preview-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.wi-preview-device {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.wi-preview-device.active {
+    background: #2271b1;
+    color: #fff;
+    border-color: #135e96;
+}
+
+.wi-preview-body {
+    flex: 1;
+    padding: 20px;
+    background: #f9f9f9;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#wi-preview-iframe {
+    width: 100%;
+    height: 100%;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+#wi-preview-iframe.device-tablet {
+    width: 768px;
+    max-width: 100%;
+}
+
+#wi-preview-iframe.device-mobile {
+    width: 375px;
+    max-width: 100%;
+}
+
+@media (max-width: 782px) {
+    .wi-submit-bar {
+        left: 0;
+    }
+
+    .wi-form-row.wi-cols-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .wi-tabs-navigation {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+    }
+
+    .wi-section-box {
+        padding: 15px;
+    }
+
+    .wi-image-upload-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* Preview panel su mobile occupa tutta la larghezza */
+    .wi-preview-panel {
+        width: 100%;
+        right: -100%;
+    }
+
+    .wi-preview-panel.active {
+        right: 0;
+    }
+
+    .wi-preview-controls {
+        flex-wrap: wrap;
+    }
+}
+</style>
+
+<script>
+jQuery(document).ready(function($) {
+    // ========================================
+    // Tab Switching
+    // ========================================
+    $('.wi-tab-btn').on('click', function() {
+        const tabId = $(this).data('tab');
+
+        // Update buttons
+        $('.wi-tab-btn').removeClass('active');
+        $(this).addClass('active');
+
+        // Update panels
+        $('.wi-tab-panel').removeClass('active');
+        $('#tab-' + tabId).addClass('active');
+
+        // Scroll to top
+        $('.wi-tabs-content').scrollTop(0);
+    });
+
+    // Tab links (in-page navigation)
+    $('.wi-tab-link').on('click', function(e) {
+        e.preventDefault();
+        const targetTab = $(this).data('tab');
+        $('.wi-tab-btn[data-tab="' + targetTab + '"]').trigger('click');
+    });
+
+    // ========================================
+    // WordPress Color Picker
+    // ========================================
+    if (typeof $.fn.wpColorPicker !== 'undefined') {
+        $('.wi-color-picker').wpColorPicker({
+            change: function(event, ui) {
+                // Update value in real-time if needed
+            }
+        });
+    }
+
+    // ========================================
+    // Range Sliders - Update Value Display
+    // ========================================
+    $('.wi-range-slider').on('input', function() {
+        const value = $(this).val();
+        const unit = $(this).attr('name').includes('opacity') ? '' :
+                     ($(this).attr('name').includes('size') && !$(this).attr('name').includes('countdown_size') && !$(this).attr('name').includes('title_size') && !$(this).attr('name').includes('message_size') ? '%' : 'px');
+        $(this).next('.wi-range-value').text(value + unit);
+    });
+
+    // ========================================
+    // WordPress Media Uploader
+    // ========================================
+    $('.wi-upload-image-btn').on('click', function(e) {
+        e.preventDefault();
+
+        const targetField = $(this).data('target');
+        const $inputField = $('#' + targetField);
+        const $preview = $('#' + targetField + '_preview');
+
+        // Crea SEMPRE un nuovo media uploader per ogni click
+        // Questo risolve il bug dove tutte le immagini andavano a decoration_top
+        const mediaUploader = wp.media({
+            title: 'Seleziona Immagine',
+            button: {
+                text: 'Usa questa immagine'
+            },
+            multiple: false
+        });
+
+        // Quando immagine è selezionata
+        mediaUploader.on('select', function() {
+            const attachment = mediaUploader.state().get('selection').first().toJSON();
+
+            // Aggiorna campo URL
+            $inputField.val(attachment.url);
+
+            // Aggiorna preview
+            $preview.html('<img src="' + attachment.url + '" style="max-width: 200px;">');
+
+            // Trigger change per aggiornare anteprima live
+            $inputField.trigger('change');
+        });
+
+        // Apri media uploader
+        mediaUploader.open();
+    });
+
+    // ========================================
+    // Form Validation
+    // ========================================
+    $('#wi-template-form').on('submit', function(e) {
+        const templateName = $('#template_name').val().trim();
+
+        if (!templateName) {
+            e.preventDefault();
+            alert('Il nome del template è obbligatorio');
+            $('.wi-tab-btn[data-tab="info-base"]').click();
+            $('#template_name').focus();
+            return false;
+        }
+
+        // Show loading indicator (non disabilitiamo per evitare che save_template non venga inviato)
+        const $submitBtn = $('input[type="submit"]');
+        $submitBtn.val('💾 Salvataggio in corso...');
+    });
+
+    // ========================================
+    // Auto-generate slug from name
+    // ========================================
+    $('#template_name').on('blur', function() {
+        const name = $(this).val();
+        // Could add slug generation logic here if needed
+    });
+
+    // ========================================
+    // Unsaved Changes Warning
+    // ========================================
+    let formChanged = false;
+
+    $('#wi-template-form :input').on('change', function() {
+        formChanged = true;
+    });
+
+    $(window).on('beforeunload', function(e) {
+        if (formChanged) {
+            const message = 'Hai modifiche non salvate. Sei sicuro di voler uscire?';
+            e.returnValue = message;
+            return message;
+        }
+    });
+
+    $('#wi-template-form').on('submit', function() {
+        formChanged = false; // Disable warning when submitting
+    });
+
+    // ========================================
+    // Keyboard Shortcuts
+    // ========================================
+    $(document).on('keydown', function(e) {
+        // Ctrl/Cmd + S to save
+        if ((e.ctrlKey || e.metaKey) && e.keyCode === 83) {
+            e.preventDefault();
+            $('#wi-template-form').submit();
+        }
+    });
+
+    // ========================================
+    // Live Preview System
+    // ========================================
+    let previewActive = false;
+    let previewUpdateTimeout = null;
+
+    // Toggle Preview Panel
+    $('#wi-toggle-preview').on('click', function() {
+        previewActive = !previewActive;
+        $('#wi-preview-panel').toggleClass('active', previewActive);
+
+        if (previewActive) {
+            $(this).html('👁️ Nascondi Anteprima');
+            updatePreview();
+        } else {
+            $(this).html('👁️ Mostra Anteprima Live');
+        }
+    });
+
+    // Close Preview
+    $('#wi-close-preview').on('click', function() {
+        previewActive = false;
+        $('#wi-preview-panel').removeClass('active');
+        $('#wi-toggle-preview').html('👁️ Mostra Anteprima Live');
+    });
+
+    // Device Switcher
+    $('.wi-preview-device').on('click', function() {
+        $('.wi-preview-device').removeClass('active');
+        $(this).addClass('active');
+
+        const device = $(this).data('device');
+        const $iframe = $('#wi-preview-iframe');
+
+        $iframe.removeClass('device-tablet device-mobile');
+        if (device !== 'desktop') {
+            $iframe.addClass('device-' + device);
+        }
+    });
+
+    // Refresh Preview
+    $('#wi-refresh-preview').on('click', function() {
+        updatePreview();
+    });
+
+    // Function to generate preview HTML
+    function updatePreview() {
+        if (!previewActive) return;
+
+        // Collect all form data
+        const templateData = {
+            // Info Base
+            name: $('#template_name').val() || 'Template Preview',
+
+            // Fonts & Colors
+            title_font: $('#title_font').val() || 'Playfair Display',
+            title_size: $('#title_size').val() || 48,
+            title_color: $('#title_color').val() || '#d4af37',
+            title_weight: $('#title_weight').val() || '600',
+
+            message_font: $('#message_font').val() || 'Lora',
+            message_size: $('#message_size').val() || 18,
+            message_color: $('#message_color').val() || '#555555',
+            message_bg_color: $('#message_bg_color').val() || 'transparent',
+
+            details_font: $('#details_font').val() || 'inherit',
+            details_size: $('#details_size').val() || 16,
+            details_color: $('#details_color').val() || '#555555',
+            details_bg_color: $('#details_bg_color').val() || 'transparent',
+
+            section_title_font: $('#section_title_font').val() || 'inherit',
+            section_title_size: $('#section_title_size').val() || 28,
+            section_title_color: $('#section_title_color').val() || '#2c3e50',
+            section_title_weight: $('#section_title_weight').val() || '600',
+
+            // Buttons
+            button_font: $('#button_font').val() || 'inherit',
+            button_size: $('#button_size').val() || 16,
+            button_color: $('#button_color').val() || '#ffffff',
+            button_bg_color: $('#button_bg_color').val() || '#d4af37',
+            button_hover_color: $('#button_hover_color').val() || '#ffffff',
+            button_hover_bg_color: $('#button_hover_bg_color').val() || '#b8941f',
+            button_radius: $('#button_radius').val() || 25,
+            button_padding: $('#button_padding').val() || 15,
+
+            // Countdown
+            countdown_style: $('#countdown_style').val() || 'style1',
+            countdown_font: $('#countdown_font').val() || 'Lora',
+            countdown_size: $('#countdown_size').val() || 48,
+            countdown_color: $('#countdown_color').val() || '#2c3e50',
+            countdown_bg_color: $('#countdown_bg_color').val() || '#f8f9fa',
+            countdown_label_font: $('#countdown_label_font').val() || 'Montserrat',
+            countdown_label_size: $('#countdown_label_size').val() || 14,
+
+            // Images
+            header_image: $('#header_image').val() || '',
+            header_size: $('#header_size').val() || 100,
+            header_opacity: $('#header_opacity').val() || 1,
+
+            decoration_top: $('#decoration_top').val() || '',
+            decoration_top_size: $('#decoration_top_size').val() || 100,
+            decoration_top_opacity: $('#decoration_top_opacity').val() || 1,
+
+            decoration_bottom: $('#decoration_bottom').val() || '',
+            decoration_bottom_size: $('#decoration_bottom_size').val() || 100,
+            decoration_bottom_opacity: $('#decoration_bottom_opacity').val() || 1,
+
+            background_image: $('#background_image').val() || '',
+            background_opacity: $('#background_opacity').val() || 0.1,
+
+            footer_logo: $('#footer_logo').val() || '',
+            footer_logo_size: $('#footer_logo_size').val() || 100,
+            footer_logo_opacity: $('#footer_logo_opacity').val() || 1,
+
+            // Background
+            background_color: $('#background_color').val() || '#ffffff',
+            background_main_opacity: $('#background_main_opacity').val() || 1,
+            overlay_color: $('#overlay_color').val() || '#000000',
+            overlay_opacity: $('#overlay_opacity').val() || 0.3,
+
+            // Custom CSS
+            custom_css: $('#custom_css').val() || ''
+        };
+
+        // Generate preview HTML
+        const previewHTML = generatePreviewHTML(templateData);
+
+        // Update iframe
+        const $iframe = $('#wi-preview-iframe');
+        const iframeDoc = $iframe[0].contentDocument || $iframe[0].contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(previewHTML);
+        iframeDoc.close();
+    }
+
+    // Generate full HTML for preview
+    function generatePreviewHTML(data) {
+        return `<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${data.name} - Anteprima</title>
+    <link href="https://fonts.googleapis.com/css2?family=${data.title_font.replace(' ', '+')}:wght@400;600;700&family=${data.message_font.replace(' ', '+')}:wght@400;600&family=${data.countdown_font.replace(' ', '+')}:wght@400;700&family=${data.countdown_label_font.replace(' ', '+')}:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: ${data.message_font}, serif;
+            background-color: ${data.background_color};
+            background-image: ${data.background_image ? `url(${data.background_image})` : 'none'};
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+        }
+
+        ${data.background_image ? `
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: ${data.overlay_color};
+            opacity: ${data.overlay_opacity};
+            z-index: 1;
+        }
+        ` : ''}
+
+        .wi-invite-container {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .wi-header-image {
+            max-width: ${data.header_size}%;
+            height: auto;
+            opacity: ${data.header_opacity};
+            margin-bottom: 30px;
+        }
+
+        .wi-decoration-top {
+            max-width: ${data.decoration_top_size}%;
+            height: auto;
+            opacity: ${data.decoration_top_opacity};
+            margin: 20px auto;
+        }
+
+        .wi-title {
+            font-family: ${data.title_font}, serif;
+            font-size: ${data.title_size}px;
+            font-weight: ${data.title_weight};
+            color: ${data.title_color};
+            margin: 30px 0;
+            line-height: 1.2;
+        }
+
+        .wi-message {
+            font-family: ${data.message_font}, serif;
+            font-size: ${data.message_size}px;
+            color: ${data.message_color};
+            background-color: ${data.message_bg_color};
+            line-height: 1.8;
+            margin: 30px auto;
+            max-width: 600px;
+            padding: ${data.message_bg_color !== 'transparent' ? '20px' : '0'};
+            border-radius: 8px;
+        }
+
+        .wi-section-title {
+            font-family: ${data.section_title_font !== 'inherit' ? data.section_title_font : data.title_font}, serif;
+            font-size: ${data.section_title_size}px;
+            font-weight: ${data.section_title_weight};
+            color: ${data.section_title_color};
+            margin: 40px 0 20px;
+        }
+
+        .wi-countdown {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .countdown-item {
+            background: ${data.countdown_bg_color};
+            padding: 20px;
+            border-radius: 10px;
+            min-width: 100px;
+        }
+
+        .countdown-value {
+            font-family: ${data.countdown_font}, serif;
+            font-size: ${data.countdown_size}px;
+            font-weight: 700;
+            color: ${data.countdown_color};
+            display: block;
+        }
+
+        .countdown-label {
+            font-family: ${data.countdown_label_font}, sans-serif;
+            font-size: ${data.countdown_label_size}px;
+            color: ${data.countdown_color};
+            opacity: 0.7;
+            margin-top: 5px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .wi-event-details {
+            font-family: ${data.details_font !== 'inherit' ? data.details_font : data.message_font}, serif;
+            font-size: ${data.details_size}px;
+            color: ${data.details_color};
+            background-color: ${data.details_bg_color};
+            margin: 30px auto;
+            max-width: 500px;
+            padding: ${data.details_bg_color !== 'transparent' ? '20px' : '0'};
+            border-radius: 8px;
+        }
+
+        .wi-button {
+            font-family: ${data.button_font !== 'inherit' ? data.button_font : data.title_font}, sans-serif;
+            font-size: ${data.button_size}px;
+            color: ${data.button_color};
+            background-color: ${data.button_bg_color};
+            padding: ${data.button_padding}px 30px;
+            border: none;
+            border-radius: ${data.button_radius}px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .wi-button:hover {
+            color: ${data.button_hover_color};
+            background-color: ${data.button_hover_bg_color};
+        }
+
+        .wi-decoration-bottom {
+            max-width: ${data.decoration_bottom_size}%;
+            height: auto;
+            opacity: ${data.decoration_bottom_opacity};
+            margin: 40px auto 20px;
+        }
+
+        .wi-footer-logo {
+            max-width: ${data.footer_logo_size}%;
+            height: auto;
+            opacity: ${data.footer_logo_opacity};
+            margin: 40px auto;
+        }
+
+        /* Custom CSS */
+        ${data.custom_css}
+    </style>
+</head>
+<body>
+    <div class="wi-invite-container">
+        ${data.header_image ? `<img src="${data.header_image}" alt="Header" class="wi-header-image">` : ''}
+
+        <h1 class="wi-title">Maria & Giovanni</h1>
+
+        <div class="wi-message">
+            <p>Con gioia vi invitiamo a celebrare insieme a noi il giorno più bello della nostra vita.</p>
+        </div>
+
+        ${data.decoration_top ? `<img src="${data.decoration_top}" alt="Decorazione" class="wi-decoration-top">` : ''}
+
+        <h2 class="wi-section-title">Mancano</h2>
+
+        <div class="wi-countdown">
+            <div class="countdown-item">
+                <span class="countdown-value">42</span>
+                <span class="countdown-label">Giorni</span>
+            </div>
+            <div class="countdown-item">
+                <span class="countdown-value">15</span>
+                <span class="countdown-label">Ore</span>
+            </div>
+            <div class="countdown-item">
+                <span class="countdown-value">30</span>
+                <span class="countdown-label">Minuti</span>
+            </div>
+            <div class="countdown-item">
+                <span class="countdown-value">45</span>
+                <span class="countdown-label">Secondi</span>
+            </div>
+        </div>
+
+        ${data.decoration_bottom ? `<img src="${data.decoration_bottom}" alt="Decorazione" class="wi-decoration-bottom">` : ''}
+
+        <h2 class="wi-section-title">Dettagli Evento</h2>
+
+        <div class="wi-event-details">
+            <p><strong>📅 Data:</strong> 15 Giugno 2025</p>
+            <p><strong>🕐 Ora:</strong> 16:00</p>
+            <p><strong>📍 Luogo:</strong> Villa Elegante</p>
+            <p><strong>🗺️ Indirizzo:</strong> Via Roma 123, Milano</p>
+        </div>
+
+        <a href="#" class="wi-button">🗓️ Aggiungi al Calendario</a>
+        <a href="#" class="wi-button">📍 Apri Mappa</a>
+
+        ${data.footer_logo ? `<img src="${data.footer_logo}" alt="Logo" class="wi-footer-logo">` : ''}
+    </div>
+</body>
+</html>`;
+    }
+
+    // Auto-update preview when fields change (with debounce)
+    $('#wi-template-form :input').on('input change', function() {
+        if (!previewActive) return;
+
+        // Debounce per non aggiornare troppo spesso
+        clearTimeout(previewUpdateTimeout);
+        previewUpdateTimeout = setTimeout(function() {
+            updatePreview();
+        }, 500);
+    });
+
+    // ========================================
+    // Initialize on page load
+    // ========================================
+    console.log('✅ Wedding Invites Unified Editor loaded successfully');
+    console.log('📋 Active tab:', $('.wi-tab-btn.active').data('tab'));
+    console.log('👁️ Live Preview system ready');
+});
+</script>
+<?php

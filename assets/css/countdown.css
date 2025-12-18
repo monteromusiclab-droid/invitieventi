@@ -1,0 +1,277 @@
+/*
+ * Countdown Timer Styles
+ * Stili specifici per il timer del conto alla rovescia
+ */
+
+.wi-countdown {
+    position: relative;
+    padding: 40px 20px;
+    margin: 30px 0;
+}
+
+.countdown-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.countdown-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    min-width: 120px;
+    padding: 20px 15px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 12px;
+    box-shadow:
+        0 4px 15px rgba(0,0,0,0.08),
+        inset 0 1px 0 rgba(255,255,255,0.8);
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.countdown-value {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #2c3e50;
+    font-family: 'Montserrat', sans-serif;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    width: 100%;
+    text-align: center;
+    display: block;
+    font-variant-numeric: tabular-nums;
+}
+
+.countdown-label {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    margin-top: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    width: 100%;
+    display: block;
+    text-align: center;
+}
+
+.countdown-separator {
+    font-size: 2.8rem;
+    color: #bdc3c7;
+    font-weight: 300;
+    margin: 0 8px;
+    opacity: 0.6;
+}
+
+.countdown-expired {
+    font-size: 1.8rem;
+    color: #27ae60;
+    font-weight: 700;
+    padding: 30px;
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.2);
+    text-align: center;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+/* Template Specifico - Elegante */
+.wi-elegant .countdown-item {
+    background: linear-gradient(135deg, #fff5e6 0%, #ffffff 100%);
+    border: 1px solid #d4af37;
+}
+
+
+}
+
+.wi-elegant .countdown-value {
+    color: #8b7355;
+}
+
+.wi-elegant .countdown-label {
+    color: #a89176;
+}
+
+/* Template Specifico - Moderno */
+.wi-modern .countdown-item {
+    background: #000;
+    color: white;
+    border: 2px solid #333;
+}
+
+
+
+.wi-modern .countdown-value {
+    color: #fff;
+}
+
+.wi-modern .countdown-label {
+    color: #bbb;
+}
+
+/* Template Specifico - Floreale */
+.wi-floral .countdown-item {
+    background: linear-gradient(135deg, #fff5f7 0%, #ffe0e8 100%);
+    border: 1px solid #ffc0cb;
+}
+
+
+}
+
+.wi-floral .countdown-value {
+    color: #c45079;
+}
+
+.wi-floral .countdown-label {
+    color: #d8779a;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .countdown-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+
+    .countdown-item {
+        width: 100%;
+        min-width: auto;
+        padding: 15px 10px;
+    }
+
+    .countdown-value {
+        font-size: 2.5rem;
+        width: 100%;
+    }
+
+    .countdown-label {
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+        margin-top: 8px;
+    }
+
+    .countdown-separator {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .wi-countdown {
+        padding: 30px 10px;
+    }
+
+    .countdown-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        max-width: 280px;
+        margin: 0 auto;
+    }
+
+    .countdown-item {
+        width: 100%;
+        min-width: auto;
+        padding: 12px 8px;
+    }
+
+    .countdown-value {
+        font-size: 2rem;
+        width: 100%;
+    }
+
+    .countdown-label {
+        font-size: 0.65rem;
+        letter-spacing: 0.5px;
+        margin-top: 6px;
+    }
+
+    .countdown-separator {
+        display: none;
+    }
+
+    .countdown-expired {
+        font-size: 1.3rem;
+        padding: 20px;
+    }
+}
+
+/* Animazioni avanzate 
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/*.countdown-item {
+    animation: slideInDown 0.5s ease-out;
+}
+
+.countdown-item:nth-child(1) { animation-delay: 0.1s; }
+.countdown-item:nth-child(2) { animation-delay: 0.2s; }
+.countdown-item:nth-child(3) { animation-delay: 0.15s; }
+.countdown-item:nth-child(4) { animation-delay: 0.25s; }
+.countdown-item:nth-child(5) { animation-delay: 0.2s; }
+.countdown-item:nth-child(6) { animation-delay: 0.3s; }
+.countdown-item:nth-child(7) { animation-delay: 0.25s; }
+
+ Effetto digit flip 
+.countdown-value.flipping {
+    animation: digitFlip 0.6s ease-in-out;
+}
+
+@keyframes digitFlip {
+    0%, 100% { transform: rotateX(0deg); }
+    50% { transform: rotateX(90deg); }
+}
+
+Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .countdown-item {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        box-shadow: 
+            0 4px 15px rgba(0,0,0,0.3),
+            inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    
+    .countdown-value {
+        color: #ecf0f1;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .countdown-label {
+        color: #95a5a6;
+    }
+}
+
+/* Print styles */
+@media print {
+    .countdown-item {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+  /*   .countdown-item::before {
+        display: none;
+    }
+    */
+    .countdown-separator {
+        animation: none;
+    }
+}

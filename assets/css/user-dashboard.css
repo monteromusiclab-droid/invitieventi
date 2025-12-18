@@ -1,0 +1,545 @@
+/**
+ * User Dashboard CSS
+ * Dashboard personale frontend per utenti registrati
+ */
+
+/* ================================
+   CONTAINER PRINCIPALE
+   ================================ */
+.wi-user-dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* Login Prompt */
+.wi-user-dashboard.wi-not-logged-in {
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wi-login-prompt {
+    text-align: center;
+    padding: 60px 40px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    max-width: 500px;
+}
+
+.wi-prompt-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.wi-login-prompt h2 {
+    font-size: 28px;
+    color: #1e293b;
+    margin-bottom: 12px;
+}
+
+.wi-login-prompt p {
+    color: #64748b;
+    font-size: 16px;
+    margin-bottom: 30px;
+}
+
+/* ================================
+   HEADER DASHBOARD
+   ================================ */
+.wi-dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    padding-bottom: 30px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.wi-header-content {
+    flex: 1;
+}
+
+.wi-dashboard-title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.wi-title-icon {
+    font-size: 40px;
+}
+
+.wi-dashboard-subtitle {
+    font-size: 16px;
+    color: #64748b;
+    margin: 0;
+}
+
+.wi-header-actions {
+    flex-shrink: 0;
+}
+
+/* ================================
+   GRID STATISTICHE
+   ================================ */
+.wi-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.wi-stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.wi-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.wi-stat-icon {
+    font-size: 48px;
+    flex-shrink: 0;
+}
+
+.wi-stat-content {
+    flex: 1;
+}
+
+.wi-stat-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.wi-stat-label {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Colori specifici per card */
+.wi-stat-invites {
+    border-color: #dbeafe;
+    background: linear-gradient(135deg, #fff 0%, #dbeafe 100%);
+}
+
+.wi-stat-confirmed {
+    border-color: #d1fae5;
+    background: linear-gradient(135deg, #fff 0%, #d1fae5 100%);
+}
+
+.wi-stat-declined {
+    border-color: #fee2e2;
+    background: linear-gradient(135deg, #fff 0%, #fee2e2 100%);
+}
+
+.wi-stat-guests {
+    border-color: #fef3c7;
+    background: linear-gradient(135deg, #fff 0%, #fef3c7 100%);
+}
+
+/* ================================
+   EMPTY STATE
+   ================================ */
+.wi-empty-state {
+    text-align: center;
+    padding: 80px 40px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.wi-empty-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+}
+
+.wi-empty-state h3 {
+    font-size: 24px;
+    color: #1e293b;
+    margin-bottom: 12px;
+}
+
+.wi-empty-state p {
+    color: #64748b;
+    font-size: 16px;
+    margin-bottom: 30px;
+}
+
+/* ================================
+   SEZIONE INVITI
+   ================================ */
+.wi-invites-section {
+    margin-top: 40px;
+}
+
+.wi-section-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 24px;
+}
+
+.wi-invites-list {
+    display: grid;
+    gap: 24px;
+}
+
+/* ================================
+   CARD INVITO
+   ================================ */
+.wi-invite-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    border: 2px solid #f1f5f9;
+}
+
+.wi-invite-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-color: #667eea;
+}
+
+.wi-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.wi-card-title-section {
+    flex: 1;
+}
+
+.wi-card-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+}
+
+.wi-card-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.wi-meta-date,
+.wi-meta-location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.wi-meta-icon {
+    font-size: 16px;
+}
+
+.wi-card-actions {
+    flex-shrink: 0;
+}
+
+/* ================================
+   STATISTICHE MINI (IN CARD)
+   ================================ */
+.wi-card-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.wi-stat-mini {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.wi-mini-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.wi-mini-content {
+    flex: 1;
+}
+
+.wi-mini-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1;
+}
+
+.wi-mini-label {
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* ================================
+   FOOTER CARD
+   ================================ */
+.wi-card-footer {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.wi-rsvp-disabled {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.wi-disabled-icon {
+    font-size: 16px;
+}
+
+/* ================================
+   PULSANTI
+   ================================ */
+.wi-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.wi-btn-icon {
+    font-size: 16px;
+}
+
+.wi-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.wi-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+}
+
+.wi-btn-outline {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.wi-btn-outline:hover {
+    background: #667eea;
+    color: white;
+}
+
+.wi-btn-small {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+.wi-btn-large {
+    padding: 16px 32px;
+    font-size: 16px;
+}
+
+/* ================================
+   MODAL LISTA OSPITI
+   ================================ */
+.wi-guests-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+}
+
+.wi-modal-content {
+    background: white;
+    border-radius: 16px;
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.wi-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.wi-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.wi-modal-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.wi-modal-close:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.wi-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+.wi-guests-loading {
+    text-align: center;
+    padding: 40px;
+}
+
+.wi-loader {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f1f5f9;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ================================
+   RESPONSIVE
+   ================================ */
+@media (max-width: 768px) {
+    .wi-user-dashboard {
+        padding: 20px 15px;
+    }
+
+    .wi-dashboard-header {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .wi-header-actions {
+        width: 100%;
+    }
+
+    .wi-header-actions .wi-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .wi-dashboard-title {
+        font-size: 28px;
+    }
+
+    .wi-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .wi-card-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .wi-card-actions {
+        width: 100%;
+    }
+
+    .wi-card-actions .wi-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .wi-card-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .wi-card-footer {
+        flex-direction: column;
+    }
+
+    .wi-card-footer .wi-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .wi-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wi-card-stats {
+        grid-template-columns: 1fr;
+    }
+}

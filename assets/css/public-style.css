@@ -1,0 +1,582 @@
+/* 
+ * Wedding Invites Pro - Public Styles
+ * Stili per la visualizzazione pubblica degli inviti
+ */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600;700&family=Great+Vibes&family=Dancing+Script:wght@400;700&family=Roboto:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Lato:wght@300;400;700&display=swap');
+
+/* Reset e base */
+.wi-single-invite-wrapper * {
+    box-sizing: border-box;
+}
+
+.wi-template {
+    font-family: 'Montserrat', sans-serif;
+    line-height: 1.6;
+    color: #2c3e50;
+}
+
+/* Header Image Styles */
+.wi-header-image {
+    width: 100%;
+    min-height: 300px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+}
+
+/* Content Wrapper */
+.wi-content-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* Title Styles */
+.wi-title {
+    text-align: center;
+    font-size: 3rem;
+    font-weight: 700;
+    margin: 2rem 0;
+    line-height: 1.2;
+    color: #2c3e50;
+}
+
+/* Dividers */
+.wi-divider-top,
+.wi-divider-bottom {
+    text-align: center;
+    margin: 2rem auto;
+}
+
+.wi-divider-top svg,
+.wi-divider-bottom svg {
+    width: 200px;
+    height: auto;
+}
+
+.wi-divider-line {
+    width: 100px;
+    height: 2px;
+    background: #2c3e50;
+    margin: 2rem auto;
+}
+
+.wi-flower-divider {
+    text-align: center;
+    font-size: 2rem;
+    margin: 1.5rem 0;
+}
+
+/* Message */
+.wi-message {
+    text-align: center;
+    font-size: 1.2rem;
+    line-height: 1.8;
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 0 20px;
+    color: #555;
+}
+
+/* Event Info */
+.wi-event-info {
+    margin: 40px auto;
+    padding: 30px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    max-width: 600px;
+}
+
+.wi-info-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0;
+    font-size: 1.1rem;
+}
+
+.wi-info-item .wi-icon-calendar::before,
+.wi-info-item .wi-icon-clock::before,
+.wi-info-item .wi-icon-location::before {
+    font-family: 'dashicons';
+    font-size: 20px;
+}
+
+.wi-icon-calendar::before {
+    content: '\f145';
+}
+
+.wi-icon-clock::before {
+    content: '\f469';
+}
+
+.wi-icon-location::before {
+    content: '\f230';
+}
+
+/* User Image */
+.wi-user-image {
+    margin: 40px 0;
+    text-align: center;
+}
+
+.wi-user-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+/* Map */
+.wi-map {
+    height: 400px;
+    margin: 40px 0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    background: #e0e0e0;
+}
+
+/* Share Buttons */
+.wi-share-buttons {
+    margin: 40px auto;
+    padding: 30px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 600px;
+}
+
+.wi-share-buttons h3 {
+    margin: 0 0 20px 0;
+    color: #2c3e50;
+    font-size: 1.5rem;
+}
+
+.wi-share-btns {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.wi-share-btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.wi-share-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.wi-share-btn.wi-whatsapp {
+    background: #25D366;
+    color: white;
+}
+
+.wi-share-btn.wi-email {
+    background: #3498db;
+    color: white;
+}
+
+.wi-share-btn.wi-copy {
+    background: #95a5a6;
+    color: white;
+}
+
+/* Calendar Button */
+.wi-calendar-button {
+    margin: 30px 0;
+    text-align: center;
+}
+
+.wi-add-calendar {
+    padding: 15px 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.wi-add-calendar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Footer Logo */
+.wi-footer-logo {
+    margin: 40px 0 0 0;
+    text-align: center;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+}
+
+.wi-footer-logo:hover {
+    opacity: 0.8;
+}
+
+.wi-footer-logo img {
+    max-width: 150px;
+    height: auto;
+}
+
+/* Countdown Styles */
+.wi-countdown {
+    margin: 30px 0;
+    padding: 20px;
+    text-align: center;
+}
+
+.countdown-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.countdown-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+    padding: 15px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.countdown-value {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #2c3e50;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.countdown-label {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin-top: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+/*
+.countdown-separator {
+    font-size: 2.5rem;
+    color: #bdc3c7;
+    font-weight: 300;
+    margin: 0 5px;
+}
+*/
+.countdown-expired {
+    font-size: 1.5rem;
+    color: #27ae60;
+    font-weight: 600;
+    padding: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .wi-title {
+        font-size: 2rem;
+    }
+    
+    .wi-message {
+        font-size: 1rem;
+    }
+    
+    .wi-header-image {
+        min-height: 200px;
+    }
+    
+    .countdown-value {
+        font-size: 2rem;
+    }
+    
+    .countdown-item {
+        min-width: 60px;
+        padding: 10px;
+    }
+    
+    .countdown-separator {
+        font-size: 1.5rem;
+        margin: 0 2px;
+    }
+    
+    .wi-share-btns {
+        flex-direction: column;
+    }
+    
+    .wi-share-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .wi-map {
+        height: 300px;
+    }
+    
+    .wi-event-info {
+        padding: 20px;
+    }
+    
+    .wi-info-item {
+        font-size: 1rem;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .wi-content-wrapper {
+        padding: 20px 15px;
+    }
+    
+    .wi-title {
+        font-size: 1.5rem;
+        margin: 1.5rem 0;
+    }
+    
+    .countdown-container {
+        gap: 5px;
+    }
+    
+    .countdown-item {
+        min-width: 50px;
+        padding: 8px;
+    }
+    
+    .countdown-value {
+        font-size: 1.5rem;
+    }
+    
+    .countdown-label {
+        font-size: 0.7rem;
+    }
+    
+    .wi-add-calendar {
+        padding: 12px 25px;
+        font-size: 1rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .wi-share-buttons,
+    .wi-calendar-button {
+        display: none;
+    }
+    
+    .wi-template {
+        box-shadow: none;
+    }
+}
+
+/* Animazioni */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.wi-content-wrapper > * {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.wi-content-wrapper > *:nth-child(1) { animation-delay: 0.1s; }
+.wi-content-wrapper > *:nth-child(2) { animation-delay: 0.2s; }
+.wi-content-wrapper > *:nth-child(3) { animation-delay: 0.3s; }
+.wi-content-wrapper > *:nth-child(4) { animation-delay: 0.4s; }
+.wi-content-wrapper > *:nth-child(5) { animation-delay: 0.5s; }
+
+/* Login Required Message */
+.wi-login-required {
+    max-width: 600px;
+    margin: 80px auto;
+    padding: 60px 40px;
+    text-align: center;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.wi-login-required p {
+    font-size: 1.2rem;
+    color: #7f8c8d;
+    margin-bottom: 30px;
+}
+
+.wi-login-required .wi-btn {
+    display: inline-block;
+    padding: 15px 40px;
+    margin: 10px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.wi-login-required .wi-btn:first-of-type {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.wi-login-required .wi-btn:first-of-type:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.wi-login-required .wi-btn-secondary {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.wi-login-required .wi-btn-secondary:hover {
+    background: #667eea;
+    color: white;
+}
+/* Rimuove definitivamente il lampeggio dei due puntini */
+/* ====================================
+   PULSANTE RIMUOVI IMMAGINE
+   ==================================== */
+.wi-image-preview-container {
+    position: relative;
+    display: inline-block;
+    margin-top: 15px;
+}
+
+.wi-image-preview-container img {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.wi-remove-image-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(220, 38, 38, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.wi-remove-image-btn:hover {
+    background: rgba(185, 28, 28, 1);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.wi-remove-image-btn:active {
+    transform: scale(0.95);
+}
+
+/* ====================================
+   MESSAGGIO FINALE (Pulsante Toggle)
+   ==================================== */
+.wi-final-message-section {
+    text-align: center;
+    padding: 40px 20px;
+    margin: 30px 0;
+}
+
+.wi-final-message-btn {
+    display: inline-block;
+    padding: 18px 40px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.wi-final-message-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.wi-final-message-btn.active {
+    transform: scale(0.95);
+}
+
+/* IMPORTANTE: Nascondi il contenuto finché non viene cliccato il pulsante */
+.wi-final-message-content {
+    display: none !important;
+    margin-top: 30px;
+    padding: 30px;
+    border-radius: 15px;
+    background: rgba(0,0,0,0.02);
+    border: 2px solid rgba(0,0,0,0.05);
+    line-height: 1.8;
+    font-size: 1.1rem;
+    text-align: left;
+}
+
+/* Animazione quando il contenuto diventa visibile */
+@keyframes fadeInMessage {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+    .wi-final-message-btn {
+        padding: 14px 24px;
+        font-size: 1rem;
+    }
+
+    .wi-final-message-content {
+        padding: 20px 15px;
+        font-size: 1rem;
+    }
+}

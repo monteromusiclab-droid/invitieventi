@@ -1,0 +1,257 @@
+/**
+ * QR Code Generator Styles
+ */
+
+/* ============================================
+   QR BOX SIDEBAR
+   ============================================ */
+.wi-qr-box {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.wi-qr-box h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.wi-qr-section {
+    text-align: center;
+}
+
+/* ============================================
+   QR PREVIEW
+   ============================================ */
+.wi-qr-preview {
+    background: #f0f0f1;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wi-qr-placeholder {
+    text-align: center;
+    color: #50575e;
+}
+
+.wi-qr-placeholder p {
+    margin: 10px 0 0 0;
+    font-size: 14px;
+}
+
+.wi-qr-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+/* ============================================
+   QR ACTIONS
+   ============================================ */
+.wi-qr-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.wi-qr-actions button {
+    width: 100%;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.wi-qr-info {
+    text-align: center;
+    font-style: italic;
+}
+
+/* ============================================
+   CUSTOMIZATION MODAL
+   ============================================ */
+.wi-qr-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wi-qr-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.wi-qr-modal-content {
+    position: relative;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.wi-qr-modal-header {
+    background: #f0f0f1;
+    border-bottom: 1px solid #dcdcde;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wi-qr-modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #1d2327;
+}
+
+.wi-qr-modal-close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    color: #50575e;
+    transition: color 0.2s;
+}
+
+.wi-qr-modal-close:hover {
+    color: #d63638;
+}
+
+.wi-qr-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.wi-qr-customize-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.wi-qr-customize-section:last-child {
+    border-bottom: none;
+}
+
+.wi-qr-customize-section h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2327;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.wi-qr-customize-section label {
+    display: block;
+    margin-bottom: 15px;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.wi-qr-customize-section input[type="number"],
+.wi-qr-customize-section input[type="color"],
+.wi-qr-customize-section select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    margin-top: 5px;
+    font-size: 14px;
+}
+
+.wi-qr-customize-section input[type="color"] {
+    height: 40px;
+    cursor: pointer;
+}
+
+.wi-qr-preview-mini {
+    background: #f0f0f1;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+}
+
+.wi-qr-preview-mini img {
+    max-width: 200px;
+    height: auto;
+}
+
+.wi-qr-modal-footer {
+    background: #f0f0f1;
+    border-top: 1px solid #dcdcde;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.wi-qr-modal-footer .button {
+    margin: 0;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    .wi-qr-modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .wi-qr-modal-header,
+    .wi-qr-modal-body,
+    .wi-qr-modal-footer {
+        padding: 15px;
+    }
+
+    .wi-qr-customize-section {
+        margin-bottom: 20px;
+    }
+}
+
+/* ============================================
+   SPINNER
+   ============================================ */
+.wi-qr-preview .spinner,
+.wi-qr-preview-mini .spinner {
+    float: none;
+    margin: 0 auto;
+}
+
+/* ============================================
+   UTILITIES
+   ============================================ */
+.wi-qr-box .notice {
+    margin-left: -20px;
+    margin-right: -20px;
+    margin-top: -20px;
+    margin-bottom: 15px;
+}

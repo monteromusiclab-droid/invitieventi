@@ -1,0 +1,43 @@
+<svg width="1080" height="1920" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="birthdayGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+      <stop offset="25%" style="stop-color:#feca57;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#48dbfb;stop-opacity:1" />
+      <stop offset="75%" style="stop-color:#ff9ff3;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#54a0ff;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Confetti pattern -->
+    <g id="confetti">
+      <rect x="0" y="0" width="8" height="8" fill="#fff" opacity="0.8" rx="1"/>
+      <circle cx="20" cy="15" r="4" fill="#ffd700" opacity="0.7"/>
+      <polygon points="35,5 40,15 30,15" fill="#ff6b6b" opacity="0.6"/>
+    </g>
+  </defs>
+
+  <!-- Background gradient -->
+  <rect width="1080" height="1920" fill="url(#birthdayGradient)"/>
+
+  <!-- Animated confetti -->
+  <use href="#confetti" x="100" y="200" transform="rotate(15 104 204)"/>
+  <use href="#confetti" x="300" y="400" transform="rotate(-20 304 404)"/>
+  <use href="#confetti" x="800" y="300" transform="rotate(30 804 304)"/>
+  <use href="#confetti" x="200" y="800" transform="rotate(-15 204 804)"/>
+  <use href="#confetti" x="900" y="1000" transform="rotate(25 904 1004)"/>
+  <use href="#confetti" x="150" y="1400" transform="rotate(-30 154 1404)"/>
+  <use href="#confetti" x="700" y="1600" transform="rotate(10 704 1604)"/>
+  <use href="#confetti" x="500" y="1200" transform="rotate(-25 504 1204)"/>
+
+  <!-- Balloons decorative -->
+  <ellipse cx="150" cy="250" rx="40" ry="50" fill="#ff6b6b" opacity="0.4"/>
+  <line x1="150" y1="300" x2="130" y2="400" stroke="#fff" stroke-width="2" opacity="0.3"/>
+
+  <ellipse cx="930" cy="350" rx="40" ry="50" fill="#48dbfb" opacity="0.4"/>
+  <line x1="930" y1="400" x2="950" y2="500" stroke="#fff" stroke-width="2" opacity="0.3"/>
+
+  <!-- Stars -->
+  <polygon points="540,150 550,180 580,180 555,200 565,230 540,210 515,230 525,200 500,180 530,180" fill="#fff" opacity="0.6"/>
+  <polygon points="200,1650 207,1670 227,1670 210,1685 217,1705 200,1690 183,1705 190,1685 173,1670 193,1670" fill="#ffd700" opacity="0.5"/>
+  <polygon points="880,1750 887,1770 907,1770 890,1785 897,1805 880,1790 863,1805 870,1785 853,1770 873,1770" fill="#fff" opacity="0.5"/>
+</svg>

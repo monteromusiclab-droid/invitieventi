@@ -1,0 +1,180 @@
+/**
+ * Story Card 9:16 CSS
+ * Stili per le Story Card condivisibili sui social
+ */
+
+/* ================================
+   STORY CARD WRAPPER
+   ================================ */
+.wi-story-card-wrapper {
+    max-width: 500px;
+    margin: 0 auto 40px;
+    padding: 20px;
+}
+
+.wi-story-card {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    background: #000;
+}
+
+/* Background Image */
+.wi-story-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Text Overlay Container */
+.wi-story-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+}
+
+/* Text Elements */
+.wi-story-text {
+    position: absolute;
+    padding: 10px;
+    line-height: 1.3;
+    word-wrap: break-word;
+}
+
+.wi-story-title {
+    font-weight: 700;
+}
+
+.wi-story-date,
+.wi-story-time {
+    font-weight: 400;
+}
+
+.wi-story-location {
+    font-weight: 500;
+}
+
+.wi-story-message {
+    font-weight: 300;
+    font-style: italic;
+}
+
+/* ================================
+   ACTION BUTTONS
+   ================================ */
+.wi-story-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.wi-download-story,
+.wi-share-story {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.wi-download-story {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.wi-download-story:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+}
+
+.wi-share-story {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.wi-share-story:hover {
+    background: #667eea;
+    color: white;
+}
+
+/* ================================
+   RESPONSIVE
+   ================================ */
+@media (max-width: 768px) {
+    .wi-story-card-wrapper {
+        max-width: 100%;
+        padding: 15px;
+    }
+
+    .wi-story-card {
+        border-radius: 16px;
+    }
+
+    .wi-story-actions {
+        flex-direction: column;
+    }
+
+    .wi-download-story,
+    .wi-share-story {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .wi-story-card {
+        border-radius: 12px;
+    }
+
+    .wi-story-text {
+        padding: 8px;
+    }
+}
+
+/* ================================
+   LOADING STATE
+   ================================ */
+.wi-story-card.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.wi-story-card.loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}

@@ -1,0 +1,353 @@
+/**
+ * Live Preview Styles
+ * Anteprima in tempo reale split-screen
+ */
+
+/* ============================================
+   CONTAINER PRINCIPALE
+   ============================================ */
+.wi-live-preview-sidebar {
+    position: fixed;
+    top: 32px; /* WordPress admin bar */
+    right: -50%;
+    width: 50%;
+    height: calc(100vh - 32px);
+    background: #f0f0f1;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+    z-index: 9999;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.wi-live-preview-sidebar.visible {
+    right: 0;
+}
+
+/* Body class quando preview attiva */
+body.wi-preview-active .wrap {
+    margin-right: 50%;
+    transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   HEADER ANTEPRIMA
+   ============================================ */
+.wi-preview-header {
+    background: #fff;
+    border-bottom: 1px solid #dcdcde;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.wi-preview-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.wi-preview-title .dashicons {
+    color: #2271b1;
+}
+
+.wi-preview-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ============================================
+   DEVICE TOGGLES
+   ============================================ */
+.wi-device-toggles {
+    display: flex;
+    gap: 5px;
+    background: #f0f0f1;
+    border-radius: 4px;
+    padding: 3px;
+}
+
+.wi-device-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    color: #50575e;
+    transition: all 0.2s;
+}
+
+.wi-device-btn:hover {
+    background: #fff;
+    color: #2271b1;
+}
+
+.wi-device-btn.active {
+    background: #2271b1;
+    color: #fff;
+}
+
+.wi-device-btn .dashicons {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+}
+
+/* ============================================
+   PULSANTI CONTROLLO
+   ============================================ */
+.wi-preview-refresh,
+.wi-preview-close {
+    background: transparent;
+    border: 1px solid #dcdcde;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    color: #50575e;
+    transition: all 0.2s;
+}
+
+.wi-preview-refresh:hover {
+    background: #f0f0f1;
+    border-color: #2271b1;
+    color: #2271b1;
+}
+
+.wi-preview-close:hover {
+    background: #d63638;
+    border-color: #d63638;
+    color: #fff;
+}
+
+/* ============================================
+   BODY ANTEPRIMA
+   ============================================ */
+.wi-preview-body {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    background: #e5e5e5;
+    padding: 20px;
+}
+
+.wi-preview-frame-wrapper {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* Desktop view (default) */
+.wi-preview-frame-wrapper.desktop {
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Tablet view */
+.wi-preview-frame-wrapper.tablet {
+    width: 768px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+/* Mobile view */
+.wi-preview-frame-wrapper.mobile {
+    width: 375px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+/* ============================================
+   IFRAME ANTEPRIMA
+   ============================================ */
+#wi-live-preview-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+}
+
+/* ============================================
+   LOADING STATE
+   ============================================ */
+.wi-preview-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 10;
+}
+
+.wi-preview-loading.active {
+    display: flex;
+}
+
+.wi-preview-loading .spinner {
+    margin: 0 0 15px 0;
+}
+
+.wi-preview-loading p {
+    margin: 0;
+    color: #50575e;
+    font-size: 14px;
+}
+
+/* ============================================
+   ERROR STATE
+   ============================================ */
+.wi-preview-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #d63638;
+    padding: 40px;
+    text-align: center;
+}
+
+.wi-preview-error .dashicons {
+    width: 48px;
+    height: 48px;
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.wi-preview-error p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* ============================================
+   PULSANTE TOGGLE PRINCIPALE
+   ============================================ */
+#wi-toggle-live-preview {
+    position: relative;
+    padding-left: 35px;
+}
+
+#wi-toggle-live-preview .dashicons {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#wi-toggle-live-preview.active {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+}
+
+#wi-toggle-live-preview.active:hover {
+    background: #135e96;
+    border-color: #135e96;
+}
+
+/* ============================================
+   BADGE "LIVE"
+   ============================================ */
+.wi-live-badge {
+    display: inline-block;
+    background: #d63638;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 1400px) {
+    .wi-live-preview-sidebar {
+        width: 40%;
+        right: -40%;
+    }
+
+    body.wi-preview-active .wrap {
+        margin-right: 40%;
+    }
+}
+
+@media (max-width: 1024px) {
+    .wi-live-preview-sidebar {
+        width: 100%;
+        right: -100%;
+    }
+
+    .wi-live-preview-sidebar.visible {
+        right: 0;
+    }
+
+    body.wi-preview-active .wrap {
+        margin-right: 0;
+    }
+
+    .wi-preview-frame-wrapper.tablet,
+    .wi-preview-frame-wrapper.mobile {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .wi-live-preview-sidebar {
+        top: 46px; /* Mobile admin bar height */
+        height: calc(100vh - 46px);
+    }
+
+    .wi-preview-header {
+        padding: 10px 15px;
+    }
+
+    .wi-device-toggles {
+        display: none; /* Nasconde device toggle su mobile */
+    }
+
+    .wi-preview-body {
+        padding: 10px;
+    }
+}
+
+/* ============================================
+   UTILITIES
+   ============================================ */
+.wi-preview-hidden {
+    display: none !important;
+}
+
+/* Smooth scrolling per iframe */
+#wi-live-preview-frame {
+    scroll-behavior: smooth;
+}
+
+/* Previeni body scroll quando preview aperta */
+body.wi-preview-active.wi-no-scroll {
+    overflow: hidden;
+}
